@@ -60,7 +60,7 @@ export const TableNodeDependencyIndicator: React.FC<TableNodeDependencyIndicator
                 {table.isView || table.isMaterializedView ? (
                     <Handle
                         id={`${TOP_SOURCE_HANDLE_ID_PREFIX}${table.id}`}
-                        className={`!h-4 !w-4 !border-2 !bg-pink-600 ${!focused ? '!invisible' : ''}`}
+                        className={`!h-4 !w-4 !border-2 !bg-sky-950 ${!focused ? '!invisible' : ''}`}
                         position={Position.Top}
                         type="source"
                     />

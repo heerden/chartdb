@@ -38,13 +38,6 @@ export const en = {
                 export_diagram: 'Export Diagram',
                 restore_diagram: 'Restore Diagram',
             },
-            help: {
-                help: 'Help',
-                docs_website: 'Docs',
-                visit_website: 'Visit ChartDB',
-                join_discord: 'Join us on Discord',
-                schedule_a_call: 'Talk with us!',
-            },
         },
 
         delete_diagram_alert: {
@@ -345,13 +338,6 @@ export const en = {
             confirm: 'Change',
         },
 
-        star_us_dialog: {
-            title: 'Help us improve!',
-            description:
-                "Would you like to star us on GitHub? It's just a click away!",
-            close: 'Not now',
-            confirm: 'Of course!',
-        },
         export_diagram_dialog: {
             title: 'Export Diagram',
             description: 'Choose the format for export:',
@@ -361,7 +347,7 @@ export const en = {
             error: {
                 title: 'Error exporting diagram',
                 description:
-                    'Something went wrong. Need help? chartdb.io@gmail.com',
+                    'Something went wrong. Need help? community@heerden.com',
             },
         },
 
@@ -373,7 +359,7 @@ export const en = {
             error: {
                 title: 'Error importing diagram',
                 description:
-                    'The diagram JSON is invalid. Please check the JSON and try again. Need help? chartdb.io@gmail.com',
+                    'The diagram JSON is invalid. Please check the JSON and try again. Need help? community@heerden.com',
             },
         },
 

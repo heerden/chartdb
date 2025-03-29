@@ -14,10 +14,6 @@ pnpm-debug.log*
 .env.local
 .env.*.local
 
-# Ignore Dockerfile and Docker Compose files
-Dockerfile
-docker-compose.yml
-
 # Ignore git files
 .git
 .gitignore

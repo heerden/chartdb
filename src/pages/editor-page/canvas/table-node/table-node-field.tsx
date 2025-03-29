@@ -170,13 +170,13 @@ export const TableNodeField: React.FC<TableNodeFieldProps> = React.memo(
                     <>
                         <Handle
                             id={`${RIGHT_HANDLE_ID_PREFIX}${field.id}`}
-                            className={`!h-4 !w-4 !border-2 !bg-pink-600 ${!focused || readonly ? '!invisible' : ''}`}
+                            className={`!h-4 !w-4 !border-2 !bg-sky-950 ${!focused || readonly ? '!invisible' : ''}`}
                             position={Position.Right}
                             type="source"
                         />
                         <Handle
                             id={`${LEFT_HANDLE_ID_PREFIX}${field.id}`}
-                            className={`!h-4 !w-4 !border-2 !bg-pink-600 ${!focused || readonly ? '!invisible' : ''}`}
+                            className={`!h-4 !w-4 !border-2 !bg-sky-950 ${!focused || readonly ? '!invisible' : ''}`}
                             position={Position.Left}
                             type="source"
                         />

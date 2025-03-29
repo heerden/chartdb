@@ -17,8 +17,7 @@ import { useDialog } from '@/hooks/use-dialog';
 import { useExportImage } from '@/hooks/use-export-image';
 import { databaseTypeToLabelMap } from '@/lib/databases';
 import { DatabaseType } from '@/lib/domain/database-type';
-import { useConfig } from '@/hooks/use-config';
-import { IS_CHARTDB_IO } from '@/lib/env';
+// import { useConfig } from '@/hooks/use-config';
 import {
     KeyboardShortcutAction,
     keyboardShortcutsForOS,
@@ -65,7 +64,7 @@ export const Menu: React.FC<MenuProps> = () => {
     } = useLocalConfig();
     const { t } = useTranslation();
     const { redo, undo, hasRedo, hasUndo } = useHistory();
-    const { config, updateConfig } = useConfig();
+    // const { config, updateConfig } = useConfig();
     const { exportImage } = useExportImage();
     const navigate = useNavigate();
 
@@ -98,22 +97,6 @@ export const Menu: React.FC<MenuProps> = () => {
         });
     }, [openExportImageDialog]);
 
-    const openChartDBIO = useCallback(() => {
-        window.location.href = 'https://chartdb.io';
-    }, []);
-
-    const openChartDBDocs = useCallback(() => {
-        window.open('https://docs.chartdb.io', '_blank');
-    }, []);
-
-    const openJoinDiscord = useCallback(() => {
-        window.open('https://discord.gg/QeFwyWSKwC', '_blank');
-    }, []);
-
-    const openCalendly = useCallback(() => {
-        window.open('https://calendly.com/fishner/15min', '_blank');
-    }, []);
-
     const exportSQL = useCallback(
         (databaseType: DatabaseType) => {
             if (databaseType === DatabaseType.GENERIC) {
@@ -124,53 +107,11 @@ export const Menu: React.FC<MenuProps> = () => {
                 return;
             }
 
-            if (IS_CHARTDB_IO) {
-                const now = new Date();
-                const lastExportsInLastHalfHour =
-                    config?.exportActions?.filter(
-                        (date) =>
-                            now.getTime() - date.getTime() < 30 * 60 * 1000
-                    ) ?? [];
-
-                if (lastExportsInLastHalfHour.length >= 5) {
-                    showAlert({
-                        title: 'Export SQL Limit Reached',
-                        content: (
-                            <div className="flex flex-col gap-1 text-sm">
-                                <div>
-                                    We set a budget to allow the community to
-                                    check the feature. You have reached the
-                                    limit of 5 AI exports every 30min.
-                                </div>
-                                <div>
-                                    Feel free to use your OPENAI_TOKEN, see the
-                                    manual{' '}
-                                    <a
-                                        href="https://github.com/chartdb/chartdb"
-                                        target="_blank"
-                                        className="text-pink-600 hover:underline"
-                                        rel="noreferrer"
-                                    >
-                                        here.
-                                    </a>
-                                </div>
-                            </div>
-                        ),
-                        closeLabel: 'Close',
-                    });
-                    return;
-                }
-
-                updateConfig({
-                    exportActions: [...lastExportsInLastHalfHour, now],
-                });
-            }
-
             openExportSQLDialog({
                 targetDatabaseType: databaseType,
             });
         },
-        [config?.exportActions, updateConfig, showAlert, openExportSQLDialog]
+        [openExportSQLDialog]
     );
 
     const showOrHideSidePanel = useCallback(() => {
@@ -306,48 +247,6 @@ export const Menu: React.FC<MenuProps> = () => {
                                     </MenubarShortcut>
                                 )}
                             </MenubarItem>
-                            <MenubarItem
-                                onClick={() => exportSQL(DatabaseType.MYSQL)}
-                            >
-                                {databaseTypeToLabelMap['mysql']}
-                                {databaseType !== DatabaseType.MYSQL && (
-                                    <MenubarShortcut className="text-base">
-                                        {emojiAI}
-                                    </MenubarShortcut>
-                                )}
-                            </MenubarItem>
-                            <MenubarItem
-                                onClick={() =>
-                                    exportSQL(DatabaseType.SQL_SERVER)
-                                }
-                            >
-                                {databaseTypeToLabelMap['sql_server']}
-                                {databaseType !== DatabaseType.SQL_SERVER && (
-                                    <MenubarShortcut className="text-base">
-                                        {emojiAI}
-                                    </MenubarShortcut>
-                                )}
-                            </MenubarItem>
-                            <MenubarItem
-                                onClick={() => exportSQL(DatabaseType.MARIADB)}
-                            >
-                                {databaseTypeToLabelMap['mariadb']}
-                                {databaseType !== DatabaseType.MARIADB && (
-                                    <MenubarShortcut className="text-base">
-                                        {emojiAI}
-                                    </MenubarShortcut>
-                                )}
-                            </MenubarItem>
-                            <MenubarItem
-                                onClick={() => exportSQL(DatabaseType.SQLITE)}
-                            >
-                                {databaseTypeToLabelMap['sqlite']}
-                                {databaseType !== DatabaseType.SQLITE && (
-                                    <MenubarShortcut className="text-base">
-                                        {emojiAI}
-                                    </MenubarShortcut>
-                                )}
-                            </MenubarItem>
                         </MenubarSubContent>
                     </MenubarSub>
                     <MenubarSub>
@@ -380,8 +279,6 @@ export const Menu: React.FC<MenuProps> = () => {
                     >
                         {t('menu.file.delete_diagram')}
                     </MenubarItem>
-                    <MenubarSeparator />
-                    <MenubarItem>{t('menu.file.exit')}</MenubarItem>
                 </MenubarContent>
             </MenubarMenu>
             <MenubarMenu>
@@ -512,36 +409,6 @@ export const Menu: React.FC<MenuProps> = () => {
                             </MenubarCheckboxItem>
                         </MenubarSubContent>
                     </MenubarSub>
-                </MenubarContent>
-            </MenubarMenu>
-
-            <MenubarMenu>
-                <MenubarTrigger>{t('menu.backup.backup')}</MenubarTrigger>
-                <MenubarContent>
-                    <MenubarItem onClick={openExportDiagramDialog}>
-                        {t('menu.backup.export_diagram')}
-                    </MenubarItem>
-                    <MenubarItem onClick={openImportDiagramDialog}>
-                        {t('menu.backup.restore_diagram')}
-                    </MenubarItem>
-                </MenubarContent>
-            </MenubarMenu>
-
-            <MenubarMenu>
-                <MenubarTrigger>{t('menu.help.help')}</MenubarTrigger>
-                <MenubarContent>
-                    <MenubarItem onClick={openChartDBDocs}>
-                        {t('menu.help.docs_website')}
-                    </MenubarItem>
-                    <MenubarItem onClick={openChartDBIO}>
-                        {t('menu.help.visit_website')}
-                    </MenubarItem>
-                    <MenubarItem onClick={openJoinDiscord}>
-                        {t('menu.help.join_discord')}
-                    </MenubarItem>
-                    <MenubarItem onClick={openCalendly}>
-                        {t('menu.help.schedule_a_call')}
-                    </MenubarItem>
                 </MenubarContent>
             </MenubarMenu>
         </Menubar>

@@ -8,7 +8,7 @@ export interface TemplatesPageHelmetProps {
     isFeatured: boolean;
 }
 
-const CHARTDB_HOST_URL = 'https://chartdb.io';
+const CHARTDB_HOST_URL = 'https://db.pfd.io';
 export const TemplatesPageHelmet: React.FC<TemplatesPageHelmetProps> = ({
     tag,
     isFeatured,
@@ -41,13 +41,13 @@ export const TemplatesPageHelmet: React.FC<TemplatesPageHelmetProps> = ({
             ) : null}
 
             {tag ? (
-                <title>{`${tag} database schema diagram templates | ChartDB`}</title>
+                <title>{`PFDDB - ${tag} database schema diagram templates`}</title>
             ) : isFeatured ? (
                 <title>
-                    Featured database schema diagram templates | ChartDB
+                    PFDDB - Featured database schema diagram templates
                 </title>
             ) : (
-                <title>Database schema diagram templates | ChartDB</title>
+                <title>PFDDB - Database schema diagram templates</title>
             )}
 
             {tag ? (
@@ -65,17 +65,17 @@ export const TemplatesPageHelmet: React.FC<TemplatesPageHelmetProps> = ({
             {tag ? (
                 <meta
                     property="og:title"
-                    content={`${tag} database schema diagram templates | ChartDB`}
+                    content={`PFDDB - ${tag} database schema diagram templates`}
                 />
             ) : isFeatured ? (
                 <meta
                     property="og:title"
-                    content="Featured database schema diagram templates | ChartDB"
+                    content="PFDDB - Featured database schema diagram templates"
                 />
             ) : (
                 <meta
                     property="og:title"
-                    content="Database schema diagram templates | ChartDB"
+                    content="PFDDB - Database schema diagram templates"
                 />
             )}
 
@@ -104,19 +104,22 @@ export const TemplatesPageHelmet: React.FC<TemplatesPageHelmetProps> = ({
                     content="Discover a collection of real-world database schema diagrams, featuring example applications and popular open-source projects."
                 />
             )}
-            <meta property="og:image" content={`${HOST_URL}/chartdb.png`} />
+            <meta
+                property="og:image"
+                content="https://github.com/heerden/pfddb/raw/fork/public/pfddb.png"
+            />
             <meta property="og:type" content="website" />
-            <meta property="og:site_name" content="ChartDB" />
+            <meta property="og:site_name" content="PFDDB" />
 
             {tag ? (
                 <meta
                     name="twitter:title"
-                    content={`${tag} database schema diagram templates | ChartDB`}
+                    content={`PFDDB - ${tag} database schema diagram templates`}
                 />
             ) : (
                 <meta
                     name="twitter:title"
-                    content="Database schema diagram templates | ChartDB"
+                    content="PFDDB - Database schema diagram templates"
                 />
             )}
 
@@ -132,10 +135,13 @@ export const TemplatesPageHelmet: React.FC<TemplatesPageHelmetProps> = ({
                 />
             )}
 
-            <meta name="twitter:image" content={`${HOST_URL}/chartdb.png`} />
+            <meta
+                name="twitter:image"
+                content="https://github.com/heerden/pfddb/raw/fork/public/pfddb.png"
+            />
             <meta name="twitter:card" content="summary_large_image" />
-            <meta name="twitter:site" content="@ChartDB_io" />
-            <meta name="twitter:creator" content="@ChartDB_io" />
+            <meta name="twitter:site" content="@PFDIO" />
+            <meta name="twitter:creator" content="@PFDIO" />
         </Helmet>
     );
 };

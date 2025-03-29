@@ -43,7 +43,7 @@ import {
 } from '@/lib/data/import-metadata/utils';
 
 const errorScriptOutputMessage =
-    'Invalid JSON. Please correct it or contact us at chartdb.io@gmail.com for help.';
+    'Invalid JSON. Please correct it or contact us at community@heerden.com for help.';
 
 export interface ImportDatabaseProps {
     goBack?: () => void;

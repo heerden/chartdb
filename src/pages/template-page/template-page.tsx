@@ -66,14 +66,14 @@ const TemplatePageComponent: React.FC = () => {
             <Helmet>
                 {template ? (
                     <>
-                        {HOST_URL !== 'https://chartdb.io' ? (
+                        {HOST_URL !== 'https://db.pfd.io' ? (
                             <link
                                 rel="canonical"
-                                href={`https://chartdb.io/templates/${templateSlug}`}
+                                href={`https://db.pfd.io/templates/${templateSlug}`}
                             />
                         ) : null}
                         <title>
-                            {`Database schema diagram for - ${template.name} | ChartDB`}
+                            {`Database schema diagram for - ${template.name} | PFDDB`}
                         </title>
                         <meta
                             name="description"
@@ -81,7 +81,7 @@ const TemplatePageComponent: React.FC = () => {
                         />
                         <meta
                             property="og:title"
-                            content={`Database schema diagram for - ${template.name} | ChartDB`}
+                            content={`Database schema diagram for - ${template.name} | PFDDB`}
                         />
                         <meta
                             property="og:url"
@@ -96,10 +96,10 @@ const TemplatePageComponent: React.FC = () => {
                             content={`${HOST_URL}${template.image}`}
                         />
                         <meta property="og:type" content="website" />
-                        <meta property="og:site_name" content="ChartDB" />
+                        <meta property="og:site_name" content="PFDDB" />
                         <meta
                             name="twitter:title"
-                            content={`Database schema for - ${template.name} | ChartDB`}
+                            content={`Database schema for - ${template.name} | PFDDB`}
                         />
                         <meta
                             name="twitter:description"
@@ -113,11 +113,11 @@ const TemplatePageComponent: React.FC = () => {
                             name="twitter:card"
                             content="summary_large_image"
                         />
-                        <meta name="twitter:site" content="@ChartDB_io" />
-                        <meta name="twitter:creator" content="@ChartDB_io" />
+                        <meta name="twitter:site" content="@PFDIO" />
+                        <meta name="twitter:creator" content="@PFDIO" />
                     </>
                 ) : (
-                    <title>Database Schema Diagram | ChartDB</title>
+                    <title>PFDDB - Database Schema Diagram</title>
                 )}
             </Helmet>
 
@@ -126,7 +126,7 @@ const TemplatePageComponent: React.FC = () => {
                     <div className="flex flex-1 justify-start gap-x-3">
                         <div className="flex items-center font-primary">
                             <a
-                                href="https://chartdb.io"
+                                href="https://db.pfd.io"
                                 className="cursor-pointer"
                                 rel="noreferrer"
                             >
@@ -136,23 +136,15 @@ const TemplatePageComponent: React.FC = () => {
                                             ? ChartDBLogo
                                             : ChartDBDarkLogo
                                     }
-                                    alt="chartDB"
+                                    alt="PFDDB"
                                     className="h-4 max-w-fit"
                                 />
                             </a>
                         </div>
                     </div>
-                    <div className="flex flex-1 justify-end">
-                        <iframe
-                            src={`https://ghbtns.com/github-btn.html?user=chartdb&repo=chartdb&type=star&size=large&text=false`}
-                            width="40"
-                            height="30"
-                            title="GitHub"
-                        ></iframe>
-                    </div>
                 </nav>
                 {!template ? (
-                    <Spinner size={'large'} className="mt-20 text-pink-600" />
+                    <Spinner size={'large'} className="mt-20 text-sky-950" />
                 ) : (
                     <div className="flex flex-1 flex-col p-3 pb-5 text-center md:px-28 md:text-left">
                         <Breadcrumb className="mb-2">
@@ -257,7 +249,7 @@ const TemplatePageComponent: React.FC = () => {
 
                                             <Link
                                                 className="break-all text-sm text-muted-foreground"
-                                                href={`${template.url}?ref=chartdb`}
+                                                href={`${template.url}?ref=PFDDB`}
                                                 target="_blank"
                                             >
                                                 {template.url}

@@ -94,12 +94,7 @@ export const ExportSQLDialog: React.FC<ExportSQLDialogProps> = ({
                 })
             );
         } else {
-            return exportSQL(filteredDiagram, targetDatabaseType, {
-                stream: true,
-                onResultStream: (text) =>
-                    setScript((prev) => (prev ? prev + text : text)),
-                signal: abortControllerRef.current?.signal,
-            });
+            return exportSQL(filteredDiagram, targetDatabaseType);
         }
     }, [targetDatabaseType, currentDiagram, filteredSchemas]);
 
@@ -140,9 +135,9 @@ export const ExportSQLDialog: React.FC<ExportSQLDialogProps> = ({
                             components={[
                                 <a
                                     key={0}
-                                    href="mailto:chartdb.io@gmail.com"
+                                    href="mailto:community@heerden.com"
                                     target="_blank"
-                                    className="text-pink-600 hover:underline"
+                                    className="text-sky-950 hover:underline"
                                     rel="noreferrer"
                                 />,
                             ]}
@@ -154,10 +149,10 @@ export const ExportSQLDialog: React.FC<ExportSQLDialogProps> = ({
                             components={[
                                 <a
                                     key={0}
-                                    href="https://github.com/chartdb/chartdb"
+                                    href="https://github.com/heerden/pfddb"
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="text-pink-600 hover:underline"
+                                    className="text-sky-950 hover:underline"
                                 />,
                             ]}
                         />

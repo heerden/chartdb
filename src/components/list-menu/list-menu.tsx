@@ -21,10 +21,10 @@ export const ListMenu = React.forwardRef<HTMLDivElement, ListMenuProps>(
                     <Link
                         key={item.href}
                         className={cn(
-                            'flex h-7 w-full text-pink-600 dark:text-white items-center gap-1 rounded-sm p-1 text-sm transition-colors hover:bg-pink-100 dark:hover:bg-pink-900 hover:no-underline',
+                            'flex h-7 w-full text-sky-950 dark:text-white items-center gap-1 rounded-sm p-1 text-sm transition-colors hover:bg-pink-100 dark:hover:bg-pink-900 hover:no-underline',
                             item.selected
                                 ? 'bg-pink-100 dark:bg-pink-900 font-semibold'
-                                : 'text-muted-foreground hover:bg-pink-50 dark:hover:bg-pink-950 hover:text-pink-600 dark:hover:text-white'
+                                : 'text-muted-foreground hover:bg-pink-50 dark:hover:bg-pink-950 hover:text-sky-950 dark:hover:text-white'
                         )}
                         href={item.href}
                     >

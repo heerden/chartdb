@@ -2,7 +2,6 @@ import React, { Suspense, useCallback, useEffect, useRef } from 'react';
 import { TopNavbar } from './top-navbar/top-navbar';
 import { useParams } from 'react-router-dom';
 import { useChartDB } from '@/hooks/use-chartdb';
-import { useDialog } from '@/hooks/use-dialog';
 import { Toaster } from '@/components/toast/toaster';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 import { useLayout } from '@/hooks/use-layout';
@@ -31,9 +30,6 @@ import { HIDE_BUCKLE_DOT_DEV } from '@/lib/env';
 import { useDiagramLoader } from './use-diagram-loader';
 import { DiffProvider } from '@/context/diff-context/diff-provider';
 
-const OPEN_STAR_US_AFTER_SECONDS = 30;
-const SHOW_STAR_US_AGAIN_AFTER_DAYS = 1;
-
 export const EditorDesktopLayoutLazy = React.lazy(
     () => import('./editor-desktop-layout')
 );
@@ -46,14 +42,11 @@ const EditorPageComponent: React.FC = () => {
     const { diagramName, currentDiagram, schemas, filteredSchemas } =
         useChartDB();
     const { openSelectSchema, showSidePanel } = useLayout();
-    const { openStarUsDialog } = useDialog();
     const { diagramId } = useParams<{ diagramId: string }>();
     const { isMd: isDesktop } = useBreakpoint('md');
     const {
         hideMultiSchemaNotification,
         setHideMultiSchemaNotification,
-        starUsDialogLastOpen,
-        setStarUsDialogLastOpen,
         githubRepoOpened,
     } = useLocalConfig();
     const { toast } = useToast();
@@ -68,22 +61,7 @@ const EditorPageComponent: React.FC = () => {
         if (!currentDiagram?.id || githubRepoOpened) {
             return;
         }
-
-        if (
-            new Date().getTime() - starUsDialogLastOpen >
-            1000 * 60 * 60 * 24 * SHOW_STAR_US_AGAIN_AFTER_DAYS
-        ) {
-            const lastOpen = new Date().getTime();
-            setStarUsDialogLastOpen(lastOpen);
-            setTimeout(openStarUsDialog, OPEN_STAR_US_AFTER_SECONDS * 1000);
-        }
-    }, [
-        currentDiagram?.id,
-        githubRepoOpened,
-        openStarUsDialog,
-        setStarUsDialogLastOpen,
-        starUsDialogLastOpen,
-    ]);
+    }, [currentDiagram?.id, githubRepoOpened]);
 
     const lastDiagramId = useRef<string>('');
 
@@ -133,7 +111,7 @@ const EditorPageComponent: React.FC = () => {
                         <ToastAction
                             onClick={() => handleChangeSchema()}
                             altText="Change the schema"
-                            className="border border-pink-600 bg-pink-600 text-white hover:bg-pink-500"
+                            className="border border-sky-950 bg-sky-950 text-white hover:bg-pink-500"
                         >
                             {t('multiple_schemas_alert.change_schema')}
                         </ToastAction>
@@ -159,8 +137,8 @@ const EditorPageComponent: React.FC = () => {
             <Helmet>
                 <title>
                     {diagramName
-                        ? `ChartDB - ${diagramName} Diagram | Visualize Database Schemas`
-                        : 'ChartDB - Create & Visualize Database Schema Diagrams'}
+                        ? `PFDDB - ${diagramName} schema`
+                        : 'PFDDB - From your CI pipeline, create a visual database schema, editable and ready to evolve'}
                 </title>
             </Helmet>
             <section

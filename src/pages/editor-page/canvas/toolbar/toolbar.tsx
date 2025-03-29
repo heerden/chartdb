@@ -100,7 +100,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ readonly }) => {
                                     onClick={showAll}
                                     className={
                                         isLostInCanvas
-                                            ? 'bg-pink-500 text-white hover:bg-pink-600 hover:text-white'
+                                            ? 'bg-pink-500 text-white hover:bg-sky-950 hover:text-white'
                                             : ''
                                     }
                                 >

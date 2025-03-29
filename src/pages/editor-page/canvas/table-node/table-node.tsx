@@ -198,7 +198,7 @@ export const TableNode: React.FC<NodeProps<TableNodeType>> = React.memo(
                     className={cn(
                         'flex w-full flex-col border-2 bg-slate-50 dark:bg-slate-950 rounded-lg shadow-sm transition-transform duration-300',
                         selected
-                            ? 'border-pink-600'
+                            ? 'border-sky-950'
                             : 'border-slate-500 dark:border-slate-700',
                         isOverlapping
                             ? 'ring-2 ring-offset-slate-50 dark:ring-offset-slate-900 ring-blue-500 ring-offset-2'

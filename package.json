@@ -1,11 +1,12 @@
 {
-    "name": "chartdb",
+    "name": "pfddb",
     "private": true,
-    "version": "1.10.0",
+    "version": "1.0.1",
     "type": "module",
+    "description": "From your CI pipeline, create a visual database schema, editable and ready to evolve",
     "scripts": {
         "dev": "vite",
-        "build": "npm run lint && tsc -b && vite build",
+        "build": "tsc -b && vite build",
         "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
         "lint:fix": "npm run lint -- --fix",
         "preview": "vite preview",
@@ -91,12 +92,14 @@
         "eslint-plugin-tailwindcss": "^3.17.4",
         "globals": "^15.13.0",
         "husky": "^9.1.5",
+        "netlify-cli": "^19.1.5",
         "postcss": "^8.4.40",
         "prettier": "^3.3.3",
         "rollup-plugin-visualizer": "^5.12.0",
         "tailwindcss": "^3.4.7",
         "typescript": "^5.2.2",
         "unplugin-inject-preload": "^3.0.0",
-        "vite": "^5.3.4"
+        "vite": "^5.3.4",
+        "vite-plugin-html": "^3.2.2"
     }
 }

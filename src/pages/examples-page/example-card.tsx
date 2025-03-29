@@ -45,7 +45,7 @@ export const ExampleCard: React.FC<ExampleCardProps> = ({ example }) => {
     return (
         <div
             onClick={utilizeExample}
-            className="flex h-96 w-full cursor-pointer flex-col rounded-xl border-2 border-slate-500 bg-slate-50 shadow-sm transition duration-300 ease-in-out hover:scale-[102%] hover:border-pink-600 dark:border-slate-700 dark:bg-slate-950"
+            className="flex h-96 w-full cursor-pointer flex-col rounded-xl border-2 border-slate-500 bg-slate-50 shadow-sm transition duration-300 ease-in-out hover:scale-[102%] hover:border-sky-950 dark:border-slate-700 dark:bg-slate-950"
         >
             <div
                 className="h-4 rounded-t-[10px]"

@@ -183,7 +183,7 @@ export const CodeSnippet: React.FC<CodeSnippetProps> = React.memo(
                             }}
                         />
                         {!isComplete ? (
-                            <div className="absolute bottom-2 right-2 size-2 animate-blink rounded-full bg-pink-600" />
+                            <div className="absolute bottom-2 right-2 size-2 animate-blink rounded-full bg-sky-950" />
                         ) : null}
                     </Suspense>
                 )}

@@ -42,7 +42,7 @@ const TemplatesPageComponent: React.FC = () => {
                     <div className="flex flex-1 justify-start gap-x-3">
                         <div className="flex items-center font-primary">
                             <a
-                                href="https://chartdb.io"
+                                href="https://db.pfd.io"
                                 className="cursor-pointer"
                                 rel="noreferrer"
                             >
@@ -52,19 +52,11 @@ const TemplatesPageComponent: React.FC = () => {
                                             ? ChartDBLogo
                                             : ChartDBDarkLogo
                                     }
-                                    alt="chartDB"
+                                    alt="PFDDB"
                                     className="h-4 max-w-fit"
                                 />
                             </a>
                         </div>
-                    </div>
-                    <div className="flex flex-1 justify-end">
-                        <iframe
-                            src={`https://ghbtns.com/github-btn.html?user=chartdb&repo=chartdb&type=star&size=large&text=false`}
-                            width="40"
-                            height="30"
-                            title="GitHub"
-                        ></iframe>
                     </div>
                 </nav>
                 <div className="flex flex-col p-3 text-center md:px-28 md:text-left">
@@ -92,7 +84,7 @@ const TemplatesPageComponent: React.FC = () => {
                     {!templates ? (
                         <Spinner
                             size={'large'}
-                            className="mt-20 text-pink-600"
+                            className="mt-20 text-sky-950"
                         />
                     ) : (
                         <div className="mt-6 flex w-full flex-col-reverse gap-4 md:flex-row">

@@ -180,7 +180,7 @@ export const RelationshipEdge: React.FC<EdgeProps<RelationshipEdgeType>> = ({
                 fill="none"
                 className={cn([
                     'react-flow__edge-path',
-                    `!stroke-2 ${selected ? '!stroke-pink-600' : '!stroke-slate-400'}`,
+                    `!stroke-2 ${selected ? '!stroke-sky-950' : '!stroke-slate-400'}`,
                     {
                         '!stroke-green-500 !stroke-[3px]':
                             isDiffNewRelationship,

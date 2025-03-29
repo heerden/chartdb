@@ -52,7 +52,7 @@ export const CloneTemplateComponent: React.FC = () => {
 
     return (
         <section className="flex w-screen flex-col bg-background">
-            <Spinner size={'large'} className="mt-20 text-pink-600" />
+            <Spinner size={'large'} className="mt-20 text-sky-950" />
         </section>
     );
 };
