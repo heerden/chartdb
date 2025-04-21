@@ -5,13 +5,14 @@ import type {
     DiffEvent,
 } from './diff-context';
 import { diffContext } from './diff-context';
-import type { ChartDBDiff, DiffMap } from './types';
+
 import { generateDiff, getDiffMapKey } from './diff-check/diff-check';
 import type { Diagram } from '@/lib/domain/diagram';
 import { useEventEmitter } from 'ahooks';
 import type { DBField } from '@/lib/domain/db-field';
 import type { DataType } from '@/lib/data/data-types/data-types';
 import type { DBRelationship } from '@/lib/domain/db-relationship';
+import type { ChartDBDiff, DiffMap } from '@/lib/domain/diff/diff';
 
 export const DiffProvider: React.FC<React.PropsWithChildren> = ({
     children,
@@ -45,7 +46,7 @@ export const DiffProvider: React.FC<React.PropsWithChildren> = ({
                 if (diff.object === 'field' && diff.type === 'added') {
                     const field = newDiagram?.tables
                         ?.find((table) => table.id === diff.tableId)
-                        ?.fields.find((f) => f.id === diff.fieldId);
+                        ?.fields.find((f) => f.id === diff.newField.id);
 
                     if (field) {
                         newFieldsMap.set(diff.tableId, [
@@ -73,7 +74,7 @@ export const DiffProvider: React.FC<React.PropsWithChildren> = ({
             diffMap.forEach((diff) => {
                 if (diff.object === 'relationship' && diff.type === 'added') {
                     const relationship = newDiagram?.relationships?.find(
-                        (rel) => rel.id === diff.relationshipId
+                        (rel) => rel.id === diff.newRelationship.id
                     );
 
                     if (relationship) {
@@ -163,6 +164,26 @@ export const DiffProvider: React.FC<React.PropsWithChildren> = ({
                 }
             }
 
+            return null;
+        },
+        [diffMap]
+    );
+
+    const getTableNewColor = useCallback<DiffContext['getTableNewColor']>(
+        ({ tableId }) => {
+            const tableColorKey = getDiffMapKey({
+                diffObject: 'table',
+                objectId: tableId,
+                attribute: 'color',
+            });
+
+            if (diffMap.has(tableColorKey)) {
+                const diff = diffMap.get(tableColorKey);
+
+                if (diff?.type === 'changed') {
+                    return diff.newValue as string;
+                }
+            }
             return null;
         },
         [diffMap]
@@ -330,6 +351,7 @@ export const DiffProvider: React.FC<React.PropsWithChildren> = ({
                 checkIfNewTable,
                 checkIfTableRemoved,
                 checkIfTableHasChange,
+                getTableNewColor,
 
                 // field diff
                 checkIfFieldHasChange,

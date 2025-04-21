@@ -12,8 +12,6 @@ From your CI pipeline, create a visual database schema, editable and ready to ev
 [Try Now!](https://db.pfd.io?ref=github_readme) •
 [Database Examples](https://db.pfd.io/examples?ref=github_readme)
 
----
-
 ## Licence
 
 ![PFDDB is released under the AGPL license](https://img.shields.io/github/license/heerden/pfddb?color=blue)
@@ -21,9 +19,7 @@ From your CI pipeline, create a visual database schema, editable and ready to ev
 PFDDB is based on ChartDB and distributed under the same AGPL licence. 
 We will regularly merge back core diagramming changes.
 
-Current supported ChartDB version is `1.10.0`.
-
----
+Current supported ChartDB version is `1.11.0`.
 
 ![Interface](public/pfddb.png)
 

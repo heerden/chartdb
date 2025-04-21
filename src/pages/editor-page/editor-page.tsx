@@ -1,5 +1,4 @@
 import React, { Suspense, useCallback, useEffect, useRef } from 'react';
-import { TopNavbar } from './top-navbar/top-navbar';
 import { useParams } from 'react-router-dom';
 import { useChartDB } from '@/hooks/use-chartdb';
 import { Toaster } from '@/components/toast/toaster';
@@ -29,6 +28,7 @@ import { CanvasProvider } from '@/context/canvas-context/canvas-provider';
 import { HIDE_BUCKLE_DOT_DEV } from '@/lib/env';
 import { useDiagramLoader } from './use-diagram-loader';
 import { DiffProvider } from '@/context/diff-context/diff-provider';
+import { TopNavbarMock } from './top-navbar/top-navbar-mock';
 
 export const EditorDesktopLayoutLazy = React.lazy(
     () => import('./editor-desktop-layout')
@@ -144,12 +144,16 @@ const EditorPageComponent: React.FC = () => {
             <section
                 className={`bg-background ${isDesktop ? 'h-screen w-screen' : 'h-dvh w-dvw'} flex select-none flex-col overflow-x-hidden`}
             >
-                <TopNavbar />
                 <Suspense
                     fallback={
-                        <div className="flex flex-1 items-center justify-center">
-                            <Spinner size={isDesktop ? 'large' : 'medium'} />
-                        </div>
+                        <>
+                            <TopNavbarMock />
+                            <div className="flex flex-1 items-center justify-center">
+                                <Spinner
+                                    size={isDesktop ? 'large' : 'medium'}
+                                />
+                            </div>
+                        </>
                     }
                 >
                     {isDesktop ? (

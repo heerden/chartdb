@@ -1,7 +1,6 @@
 import React from 'react';
 import ChartDBLogo from '@/assets/logo-light.png';
 import ChartDBDarkLogo from '@/assets/logo-dark.png';
-import { useBreakpoint } from '@/hooks/use-breakpoint';
 import { useTheme } from '@/hooks/use-theme';
 import { DiagramName } from './diagram-name';
 import { LastSaved } from './last-saved';
@@ -11,7 +10,6 @@ export interface TopNavbarProps {}
 
 export const TopNavbar: React.FC<TopNavbarProps> = () => {
     const { effectiveTheme } = useTheme();
-    const { isMd: isDesktop } = useBreakpoint('md');
 
     return (
         <nav className="flex flex-col justify-between border-b px-3 md:h-12 md:flex-row md:items-center md:px-4">
@@ -35,18 +33,10 @@ export const TopNavbar: React.FC<TopNavbarProps> = () => {
                 </div>
                 <Menu />
             </div>
-            {isDesktop ? (
-                <>
-                    <DiagramName />
-                    <div className="hidden flex-1 items-center justify-end gap-2 sm:flex">
-                        <LastSaved />
-                    </div>
-                </>
-            ) : (
-                <div className="flex flex-1 justify-center pb-2 pt-1">
-                    <DiagramName />
-                </div>
-            )}
+            <DiagramName />
+            <div className="hidden flex-1 items-center justify-end gap-2 sm:flex">
+                <LastSaved />
+            </div>
         </nav>
     );
 };
