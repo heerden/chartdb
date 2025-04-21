@@ -1,9 +1,9 @@
 {
     "name": "pfddb",
     "private": true,
-    "version": "1.0.1",
+    "version": "1.0.2",
     "type": "module",
-    "description": "From your CI pipeline, create a visual database schema, editable and ready to evolve",
+    "description": "Create a visual database schema, editable and ready to evolve, directly from your CI pipeline",
     "scripts": {
         "dev": "vite",
         "build": "tsc -b && vite build",
