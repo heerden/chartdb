@@ -19,7 +19,7 @@ import type { DBTable } from '@/lib/domain/db-table';
 import { TableNodeField } from './table-node-field';
 import { useLayout } from '@/hooks/use-layout';
 import { useChartDB } from '@/hooks/use-chartdb';
-import type { RelationshipEdgeType } from '../relationship-edge';
+import type { RelationshipEdgeType } from '../relationship-edge/relationship-edge';
 import type { DBField } from '@/lib/domain/db-field';
 import { useTranslation } from 'react-i18next';
 import { TableNodeContextMenu } from './table-node-context-menu';
@@ -60,11 +60,12 @@ export const TableNode: React.FC<NodeProps<TableNodeType>> = React.memo(
         const { updateTable, relationships, readonly } = useChartDB();
         const edges = useStore((store) => store.edges) as EdgeType[];
         const { openTableFromSidebar, selectSidebarSection } = useLayout();
-        const [expanded, setExpanded] = useState(false);
+        const [expanded, setExpanded] = useState(table.expanded ?? false);
         const { t } = useTranslation();
         const [editMode, setEditMode] = useState(false);
         const [tableName, setTableName] = useState(table.name);
         const inputRef = React.useRef<HTMLInputElement>(null);
+        const [isHovering, setIsHovering] = useState(false);
 
         const {
             getTableNewName,
@@ -115,7 +116,7 @@ export const TableNode: React.FC<NodeProps<TableNodeType>> = React.memo(
                 edge.type === 'relationship-edge'
         ) as RelationshipEdgeType[];
 
-        const focused = !!selected && !dragging;
+        const focused = (!!selected && !dragging) || isHovering;
 
         const openTableInEditor = () => {
             selectSidebarSection('tables');
@@ -137,9 +138,13 @@ export const TableNode: React.FC<NodeProps<TableNodeType>> = React.memo(
             });
         }, [table.id, updateTable]);
 
-        const toggleExpand = () => {
-            setExpanded(!expanded);
-        };
+        const toggleExpand = useCallback(() => {
+            setExpanded((prev) => {
+                const value = !prev;
+                updateTable(table.id, { expanded: value });
+                return value;
+            });
+        }, [table.id, updateTable]);
 
         const isMustDisplayedField = useCallback(
             (field: DBField) => {
@@ -239,6 +244,8 @@ export const TableNode: React.FC<NodeProps<TableNodeType>> = React.memo(
                             openTableInEditor();
                         }
                     }}
+                    onMouseEnter={() => setIsHovering(true)}
+                    onMouseLeave={() => setIsHovering(false)}
                 >
                     <NodeResizer
                         isVisible={focused}
@@ -252,7 +259,6 @@ export const TableNode: React.FC<NodeProps<TableNodeType>> = React.memo(
                         table={table}
                         focused={focused}
                     />
-                    {/* Badge added here */}
                     <TableNodeStatus
                         status={
                             isDiffNewTable

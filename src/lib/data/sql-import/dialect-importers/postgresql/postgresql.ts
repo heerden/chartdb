@@ -26,6 +26,218 @@ import {
     getTableIdWithSchemaSupport,
 } from './postgresql-common';
 
+/**
+ * Uses regular expressions to find foreign key relationships in PostgreSQL SQL content.
+ * This is a fallback method to catch relationships that might be missed by the parser.
+ */
+function findForeignKeysUsingRegex(
+    sqlContent: string,
+    tableMap: Record<string, string>,
+    relationships: SQLForeignKey[],
+    addedRelationships: Set<string>
+): void {
+    // Normalize SQL content: replace multiple whitespaces and newlines with single space
+    const normalizedSQL = sqlContent
+        .replace(/\s+/g, ' ')
+        // Replace common bracket/brace formatting issues
+        .replace(/\[\s*(\d+)\s*\]/g, '[$1]')
+        .replace(/\{\s*(\d+)\s*\}/g, '{$1}')
+        // Normalize commas and parentheses to help regex matching
+        .replace(/\s*,\s*/g, ', ')
+        .replace(/\s*\(\s*/g, ' (')
+        .replace(/\s*\)\s*/g, ') ')
+        // Ensure spaces around keywords
+        .replace(/\bREFERENCES\b/g, ' REFERENCES ')
+        .replace(/\bINT\b/g, ' INT ')
+        .replace(/\bINTEGER\b/g, ' INTEGER ')
+        .replace(/\bPRIMARY\s+KEY\b/g, ' PRIMARY KEY ')
+        .replace(/\bUNIQUE\b/g, ' UNIQUE ')
+        .replace(/\bFOREIGN\s+KEY\b/g, ' FOREIGN KEY ')
+        .replace(/\bNOT\s+NULL\b/g, ' NOT NULL ');
+
+    // First extract all table names to ensure they're in the tableMap
+    const tableNamePattern =
+        /CREATE\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?(?:\s+ONLY)?\s+(?:"?([^"\s.]+)"?\.)?["'`]?([^"'`\s.(]+)["'`]?/gi;
+    let match;
+
+    tableNamePattern.lastIndex = 0;
+    while ((match = tableNamePattern.exec(normalizedSQL)) !== null) {
+        const schemaName = match[1] || 'public';
+        const tableName = match[2];
+
+        // Skip invalid table names
+        if (!tableName || tableName.toUpperCase() === 'CREATE') continue;
+
+        // Ensure the table is in our tableMap
+        const tableKey = `${schemaName}.${tableName}`;
+        if (!tableMap[tableKey]) {
+            const tableId = generateId();
+            tableMap[tableKey] = tableId;
+        }
+    }
+
+    // Now process each CREATE TABLE statement separately to find REFERENCES
+    const createTableStatements = normalizedSQL.split(';');
+    for (const stmt of createTableStatements) {
+        if (!stmt.trim().toUpperCase().startsWith('CREATE TABLE')) continue;
+
+        // Extract the table name from the CREATE TABLE statement
+        const tableMatch = stmt.match(
+            /CREATE\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?(?:\s+ONLY)?\s+(?:"?([^"\s.]+)"?\.)?["'`]?([^"'`\s.(]+)["'`]?/i
+        );
+        if (!tableMatch) continue;
+
+        const sourceSchema = tableMatch[1] || 'public';
+        const sourceTable = tableMatch[2];
+        if (!sourceTable) continue;
+
+        // Find all REFERENCES clauses in this CREATE TABLE statement
+        // Updated pattern to handle both inline and FOREIGN KEY REFERENCES with better column name capture
+        const referencesPattern =
+            /(?:["'`]?(\w+)["'`]?\s+(?:INTEGER|INT|BIGINT|SMALLINT)(?:\s+NOT\s+NULL)?(?:\s+PRIMARY\s+KEY)?\s+REFERENCES\s+["'`]?([^"'`\s.(]+)["'`]?\s*\(\s*["'`]?(\w+)["'`]?\s*\)|FOREIGN\s+KEY\s*\(\s*["'`]?(\w+)["'`]?\s*\)\s*REFERENCES\s+["'`]?([^"'`\s.(]+)["'`]?\s*\(\s*["'`]?(\w+)["'`]?\s*\))/gi;
+
+        let refMatch;
+        while ((refMatch = referencesPattern.exec(stmt)) !== null) {
+            // Extract source and target info based on which pattern matched
+            const sourceColumn = refMatch[1] || refMatch[4]; // Column name from either pattern
+            const targetTable = refMatch[2] || refMatch[5]; // Referenced table from either pattern
+            const targetColumn = refMatch[3] || refMatch[6]; // Referenced column from either pattern
+            const targetSchema = 'public'; // Default to public schema
+
+            // Skip if any part is invalid
+            if (!sourceColumn || !targetTable || !targetColumn) {
+                continue;
+            }
+
+            // Create a unique key to track this relationship
+            const relationshipKey = `${sourceTable}.${sourceColumn}-${targetTable}.${targetColumn}`;
+
+            // Skip if we've already added this relationship
+            if (addedRelationships.has(relationshipKey)) {
+                continue;
+            }
+
+            // Get table IDs
+            const sourceTableKey = `${sourceSchema}.${sourceTable}`;
+            const targetTableKey = `${targetSchema}.${targetTable}`;
+
+            const sourceTableId = tableMap[sourceTableKey];
+            const targetTableId = tableMap[targetTableKey];
+
+            // Skip if either table ID is missing
+            if (!sourceTableId || !targetTableId) continue;
+
+            // Check if this is a one-to-one relationship
+            const isUnique =
+                stmt
+                    .toLowerCase()
+                    .includes(
+                        `${sourceColumn.toLowerCase()} integer primary key`
+                    ) ||
+                stmt
+                    .toLowerCase()
+                    .includes(
+                        `${sourceColumn.toLowerCase()} int primary key`
+                    ) ||
+                stmt
+                    .toLowerCase()
+                    .includes(
+                        `"${sourceColumn.toLowerCase()}" integer primary key`
+                    ) ||
+                stmt
+                    .toLowerCase()
+                    .includes(
+                        `"${sourceColumn.toLowerCase()}" int primary key`
+                    );
+
+            // For one-to-one relationships, both sides are 'one'
+            const sourceCardinality = isUnique ? 'one' : 'many';
+            const targetCardinality = 'one'; // Referenced PK is always one
+
+            // Add the relationship
+            relationships.push({
+                name: `FK_${sourceTable}_${sourceColumn}_${targetTable}`,
+                sourceTable,
+                sourceSchema,
+                sourceColumn,
+                targetTable,
+                targetSchema,
+                targetColumn,
+                sourceTableId,
+                targetTableId,
+                sourceCardinality,
+                targetCardinality,
+            });
+            addedRelationships.add(relationshipKey);
+        }
+    }
+}
+
+function getDefaultValueString(
+    columnDef: ColumnDefinition
+): string | undefined {
+    let defVal = columnDef.default_val;
+
+    // Unwrap {type: 'default', value: ...}
+    if (
+        defVal &&
+        typeof defVal === 'object' &&
+        defVal.type === 'default' &&
+        'value' in defVal
+    ) {
+        defVal = defVal.value;
+    }
+
+    if (defVal === undefined || defVal === null) return undefined;
+
+    let value: string | undefined;
+
+    switch (typeof defVal) {
+        case 'string':
+            value = defVal;
+            break;
+        case 'number':
+            value = String(defVal);
+            break;
+        case 'boolean':
+            value = defVal ? 'TRUE' : 'FALSE';
+            break;
+        case 'object':
+            if ('value' in defVal && typeof defVal.value === 'string') {
+                value = defVal.value;
+            } else if ('raw' in defVal && typeof defVal.raw === 'string') {
+                value = defVal.raw;
+            } else if (defVal.type === 'bool') {
+                value = defVal.value ? 'TRUE' : 'FALSE';
+            } else if (defVal.type === 'function' && defVal.name) {
+                // Handle nested structure: { name: { name: [{ value: ... }] } }
+                const fnName = defVal.name;
+                if (
+                    fnName &&
+                    typeof fnName === 'object' &&
+                    Array.isArray(fnName.name) &&
+                    fnName.name.length > 0 &&
+                    fnName.name[0].value
+                ) {
+                    value = fnName.name[0].value.toUpperCase();
+                } else if (typeof fnName === 'string') {
+                    value = fnName.toUpperCase();
+                } else {
+                    value = 'UNKNOWN_FUNCTION';
+                }
+            } else {
+                const built = buildSQLFromAST(defVal);
+                value =
+                    typeof built === 'string' ? built : JSON.stringify(built);
+            }
+            break;
+        default:
+            value = undefined;
+    }
+
+    return value;
+}
+
 // PostgreSQL-specific parsing logic
 export async function fromPostgres(
     sqlContent: string
@@ -33,6 +245,7 @@ export async function fromPostgres(
     const tables: SQLTable[] = [];
     const relationships: SQLForeignKey[] = [];
     const tableMap: Record<string, string> = {}; // Maps table name to its ID
+    const addedRelationships = new Set<string>(); // Initialize set to track added FKs
 
     try {
         const { Parser } = await import('node-sql-parser');
@@ -44,7 +257,42 @@ export async function fromPostgres(
             throw new Error('Failed to parse SQL DDL - AST is not an array');
         }
 
-        // Process each CREATE TABLE statement
+        // Process each CREATE TABLE statement first to build tableMap
+        ast.forEach((stmt: SQLAstNode) => {
+            if (stmt.type === 'create' && stmt.keyword === 'table') {
+                const createTableStmt = stmt as CreateTableStatement;
+                let tableName = '';
+                let schemaName = '';
+
+                if (
+                    createTableStmt.table &&
+                    typeof createTableStmt.table === 'object'
+                ) {
+                    if (
+                        Array.isArray(createTableStmt.table) &&
+                        createTableStmt.table.length > 0
+                    ) {
+                        const tableObj = createTableStmt.table[0];
+                        tableName = tableObj.table || '';
+                        schemaName = tableObj.schema || tableObj.db || '';
+                    } else {
+                        const tableObj =
+                            createTableStmt.table as TableReference;
+                        tableName = tableObj.table || '';
+                        schemaName = tableObj.schema || tableObj.db || '';
+                    }
+                }
+
+                if (!tableName) return;
+                if (!schemaName) schemaName = 'public';
+
+                const tableId = generateId();
+                const tableKey = `${schemaName}.${tableName}`;
+                tableMap[tableKey] = tableId;
+            }
+        });
+
+        // Now process tables and relationships
         ast.forEach((stmt: SQLAstNode) => {
             if (stmt.type === 'create' && stmt.keyword === 'table') {
                 // Extract table name and schema
@@ -114,8 +362,22 @@ export async function fromPostgres(
                                 const columnName = extractColumnName(
                                     columnDef.column
                                 );
-                                const dataType =
-                                    columnDef.definition?.dataType || '';
+                                const rawDataType =
+                                    columnDef.definition?.dataType?.toUpperCase() ||
+                                    '';
+                                let finalDataType = rawDataType;
+                                let isSerialType = false;
+
+                                if (rawDataType === 'SERIAL') {
+                                    finalDataType = 'INTEGER';
+                                    isSerialType = true;
+                                } else if (rawDataType === 'BIGSERIAL') {
+                                    finalDataType = 'BIGINT';
+                                    isSerialType = true;
+                                } else if (rawDataType === 'SMALLSERIAL') {
+                                    finalDataType = 'SMALLINT';
+                                    isSerialType = true;
+                                }
 
                                 // Handle the column definition and add to columns array
                                 if (columnName) {
@@ -128,23 +390,24 @@ export async function fromPostgres(
 
                                     columns.push({
                                         name: columnName,
-                                        type: dataType,
-                                        nullable:
-                                            columnDef.nullable?.type !==
-                                            'not null',
-                                        primaryKey: isPrimaryKey,
+                                        type: finalDataType,
+                                        nullable: isSerialType
+                                            ? false
+                                            : columnDef.nullable?.type !==
+                                              'not null',
+                                        primaryKey:
+                                            isPrimaryKey || isSerialType,
                                         unique: columnDef.unique === 'unique',
                                         typeArgs: getTypeArgs(
                                             columnDef.definition
                                         ),
-                                        default: columnDef.default_val
-                                            ? buildSQLFromAST(
-                                                  columnDef.default_val
-                                              )
-                                            : undefined,
+                                        default: isSerialType
+                                            ? undefined
+                                            : getDefaultValueString(columnDef),
                                         increment:
+                                            isSerialType ||
                                             columnDef.auto_increment ===
-                                            'auto_increment',
+                                                'auto_increment',
                                     });
                                 }
                             } else if (def.resource === 'constraint') {
@@ -489,6 +752,8 @@ export async function fromPostgres(
                                                         reference.on_update,
                                                     deleteAction:
                                                         reference.on_delete,
+                                                    sourceCardinality: 'many',
+                                                    targetCardinality: 'one',
                                                 };
 
                                                 relationships.push(fk);
@@ -822,6 +1087,8 @@ export async function fromPostgres(
                                             targetTableId,
                                             updateAction,
                                             deleteAction,
+                                            sourceCardinality: 'many',
+                                            targetCardinality: 'one',
                                         };
 
                                         relationships.push(fk);
@@ -840,39 +1107,35 @@ export async function fromPostgres(
             }
         });
 
-        // Update table IDs in relationships and fix missing target table IDs
-        relationships.forEach((rel) => {
-            // Ensure schemas are set to 'public' if empty
-            if (!rel.sourceSchema) rel.sourceSchema = 'public';
-            if (!rel.targetSchema) rel.targetSchema = 'public';
-
-            // Only check/fix sourceTableId if not already set
-            if (!rel.sourceTableId) {
-                rel.sourceTableId =
-                    getTableIdWithSchemaSupport(
-                        tableMap,
-                        rel.sourceTable,
-                        rel.sourceSchema
-                    ) || '';
-            }
-
-            // Check/fix targetTableId if not already set
-            if (!rel.targetTableId) {
-                rel.targetTableId =
-                    getTableIdWithSchemaSupport(
-                        tableMap,
-                        rel.targetTable,
-                        rel.targetSchema
-                    ) || '';
-            }
-        });
-
-        // Filter out relationships with missing source table IDs or target table IDs
-        const validRelationships = relationships.filter(
-            (rel) => rel.sourceTableId && rel.targetTableId
+        // Use regex as fallback to find additional foreign keys that the parser may have missed
+        findForeignKeysUsingRegex(
+            sqlContent,
+            tableMap,
+            relationships,
+            addedRelationships
         );
 
-        return { tables, relationships: validRelationships };
+        // Filter out any duplicate relationships that might have been added
+        const uniqueRelationships = relationships.filter((rel, index) => {
+            const key = `${rel.sourceTable}.${rel.sourceColumn}-${rel.targetTable}.${rel.targetColumn}`;
+            return (
+                index ===
+                relationships.findIndex(
+                    (r) =>
+                        `${r.sourceTable}.${r.sourceColumn}-${r.targetTable}.${r.targetColumn}` ===
+                        key
+                )
+            );
+        });
+
+        // Sort relationships for consistent output
+        uniqueRelationships.sort((a, b) => {
+            const keyA = `${a.sourceTable}.${a.sourceColumn}-${a.targetTable}.${a.targetColumn}`;
+            const keyB = `${b.sourceTable}.${b.sourceColumn}-${b.targetTable}.${b.targetColumn}`;
+            return keyA.localeCompare(keyB);
+        });
+
+        return { tables, relationships: uniqueRelationships };
     } catch (error: unknown) {
         throw new Error(
             `Error parsing PostgreSQL SQL: ${(error as Error).message}`

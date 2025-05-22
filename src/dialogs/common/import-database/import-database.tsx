@@ -1,4 +1,10 @@
-import React, { Suspense, useCallback, useEffect, useState } from 'react';
+import React, {
+    Suspense,
+    useCallback,
+    useEffect,
+    useState,
+    useRef,
+} from 'react';
 import { Button } from '@/components/button/button';
 import {
     DialogClose,
@@ -34,6 +40,49 @@ import type { editor } from 'monaco-editor';
 const errorScriptOutputMessage =
     'Invalid JSON. Please correct it or contact us at community@heerden.com for help.';
 
+// Helper to detect if content is likely SQL DDL or JSON
+const detectContentType = (content: string): 'query' | 'ddl' | null => {
+    if (!content || content.trim().length === 0) return null;
+
+    // Common SQL DDL keywords
+    const ddlKeywords = [
+        'CREATE TABLE',
+        'ALTER TABLE',
+        'DROP TABLE',
+        'CREATE INDEX',
+        'CREATE VIEW',
+        'CREATE PROCEDURE',
+        'CREATE FUNCTION',
+        'CREATE SCHEMA',
+        'CREATE DATABASE',
+    ];
+
+    const upperContent = content.toUpperCase();
+
+    // Check for SQL DDL patterns
+    const hasDDLKeywords = ddlKeywords.some((keyword) =>
+        upperContent.includes(keyword)
+    );
+    if (hasDDLKeywords) return 'ddl';
+
+    // Check if it looks like JSON
+    try {
+        // Just check structure, don't need full parse for detection
+        if (
+            (content.trim().startsWith('{') && content.trim().endsWith('}')) ||
+            (content.trim().startsWith('[') && content.trim().endsWith(']'))
+        ) {
+            return 'query';
+        }
+    } catch (error) {
+        // Not valid JSON, might be partial
+        console.error('Error detecting content type:', error);
+    }
+
+    // If we can't confidently detect, return null
+    return null;
+};
+
 export interface ImportDatabaseProps {
     goBack?: () => void;
     onImport: () => void;
@@ -67,6 +116,7 @@ export const ImportDatabase: React.FC<ImportDatabaseProps> = ({
 }) => {
     const { effectiveTheme } = useTheme();
     const [errorMessage, setErrorMessage] = useState('');
+    const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
 
     const { t } = useTranslation();
     const { isSm: isDesktop } = useBreakpoint('sm');
@@ -134,6 +184,16 @@ export const ImportDatabase: React.FC<ImportDatabaseProps> = ({
         }
     }, [errorMessage.length, onImport, scriptResult]);
 
+    const formatEditor = useCallback(() => {
+        if (editorRef.current) {
+            setTimeout(() => {
+                editorRef.current
+                    ?.getAction('editor.action.formatDocument')
+                    ?.run();
+            }, 50);
+        }
+    }, []);
+
     const handleInputChange: OnChange = useCallback(
         (inputValue) => {
             setScriptResult(inputValue ?? '');
@@ -156,22 +216,46 @@ export const ImportDatabase: React.FC<ImportDatabaseProps> = ({
         if (isStringMetadataJson(fixedJson)) {
             setScriptResult(fixedJson);
             setErrorMessage('');
+            formatEditor();
         } else {
             setScriptResult(fixedJson);
             setErrorMessage(errorScriptOutputMessage);
+            formatEditor();
         }
 
         setShowCheckJsonButton(false);
         setIsCheckingJson(false);
-    }, [scriptResult, setScriptResult]);
+    }, [scriptResult, setScriptResult, formatEditor]);
+
+    const detectAndSetImportMethod = useCallback(() => {
+        const content = editorRef.current?.getValue();
+        if (content && content.trim()) {
+            const detectedType = detectContentType(content);
+            if (detectedType && detectedType !== importMethod) {
+                setImportMethod(detectedType);
+            }
+        }
+    }, [setImportMethod, importMethod]);
+
+    const [editorDidMount, setEditorDidMount] = useState(false);
+
+    useEffect(() => {
+        if (editorRef.current && editorDidMount) {
+            editorRef.current.onDidPaste(() => {
+                setTimeout(() => {
+                    editorRef.current
+                        ?.getAction('editor.action.formatDocument')
+                        ?.run();
+                }, 0);
+                setTimeout(detectAndSetImportMethod, 0);
+            });
+        }
+    }, [detectAndSetImportMethod, editorDidMount]);
 
     const handleEditorDidMount = useCallback(
         (editor: editor.IStandaloneCodeEditor) => {
-            editor.onDidPaste(() => {
-                setTimeout(() => {
-                    editor.getAction('editor.action.formatDocument')?.run();
-                }, 0);
-            });
+            editorRef.current = editor;
+            setEditorDidMount(true);
         },
         []
     );
@@ -214,7 +298,7 @@ export const ImportDatabase: React.FC<ImportDatabaseProps> = ({
                 <div className="w-full text-center text-xs text-muted-foreground">
                     {importMethod === 'query'
                         ? 'Smart Query Output'
-                        : 'SQL DDL'}
+                        : 'SQL Script'}
                 </div>
                 <div className="flex-1 overflow-hidden">
                     <Suspense fallback={<Spinner />}>
@@ -259,30 +343,9 @@ export const ImportDatabase: React.FC<ImportDatabaseProps> = ({
                     </Suspense>
                 </div>
 
-                {showCheckJsonButton || errorMessage ? (
+                {errorMessage ? (
                     <div className="mt-2 flex shrink-0 items-center gap-2">
-                        {showCheckJsonButton ? (
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={handleCheckJson}
-                                disabled={isCheckingJson}
-                                className="h-7"
-                            >
-                                {isCheckingJson ? (
-                                    <Spinner size="small" />
-                                ) : (
-                                    t(
-                                        'new_diagram_dialog.import_database.check_script_result'
-                                    )
-                                )}
-                            </Button>
-                        ) : (
-                            <p className="text-xs text-red-700">
-                                {errorMessage}
-                            </p>
-                        )}
+                        <p className="text-xs text-red-700">{errorMessage}</p>
                     </div>
                 ) : null}
             </div>
@@ -294,10 +357,6 @@ export const ImportDatabase: React.FC<ImportDatabaseProps> = ({
             effectiveTheme,
             debouncedHandleInputChange,
             handleEditorDidMount,
-            showCheckJsonButton,
-            isCheckingJson,
-            handleCheckJson,
-            t,
         ]
     );
 
@@ -307,7 +366,7 @@ export const ImportDatabase: React.FC<ImportDatabaseProps> = ({
                 {isDesktop ? (
                     <ResizablePanelGroup
                         direction={isDesktop ? 'horizontal' : 'vertical'}
-                        className="min-h-[500px] md:min-h-fit"
+                        className="min-h-[500px]"
                     >
                         <ResizablePanel
                             defaultSize={25}
@@ -368,7 +427,22 @@ export const ImportDatabase: React.FC<ImportDatabaseProps> = ({
                         </DialogClose>
                     )}
 
-                    {keepDialogAfterImport ? (
+                    {showCheckJsonButton ? (
+                        <Button
+                            type="button"
+                            variant="default"
+                            onClick={handleCheckJson}
+                            disabled={isCheckingJson}
+                        >
+                            {isCheckingJson ? (
+                                <Spinner size="small" />
+                            ) : (
+                                t(
+                                    'new_diagram_dialog.import_database.check_script_result'
+                                )
+                            )}
+                        </Button>
+                    ) : keepDialogAfterImport ? (
                         <Button
                             type="button"
                             variant="default"
@@ -386,7 +460,6 @@ export const ImportDatabase: React.FC<ImportDatabaseProps> = ({
                                 type="button"
                                 variant="default"
                                 disabled={
-                                    showCheckJsonButton ||
                                     scriptResult.trim().length === 0 ||
                                     errorMessage.length > 0
                                 }
@@ -417,6 +490,8 @@ export const ImportDatabase: React.FC<ImportDatabaseProps> = ({
         errorMessage.length,
         scriptResult,
         showCheckJsonButton,
+        isCheckingJson,
+        handleCheckJson,
         goBack,
         t,
     ]);

@@ -21,6 +21,7 @@ import { DDLInstructions } from './instructions/ddl-instructions';
 
 const DatabasesWithoutDDLInstructions: DatabaseType[] = [
     DatabaseType.CLICKHOUSE,
+    DatabaseType.ORACLE,
 ];
 
 export interface InstructionsSectionProps {
@@ -151,7 +152,7 @@ export const InstructionsSection: React.FC<InstructionsSectionProps> = ({
                             <Avatar className="size-4 rounded-none">
                                 <Code size={16} />
                             </Avatar>
-                            DDL
+                            SQL Script
                         </ToggleGroupItem>
                     </ToggleGroup>
                 </div>
