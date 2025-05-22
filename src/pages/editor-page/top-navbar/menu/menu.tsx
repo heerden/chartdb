@@ -139,8 +139,6 @@ export const Menu: React.FC<MenuProps> = () => {
         setShowMiniMapOnCanvas(!showMiniMapOnCanvas);
     }, [showMiniMapOnCanvas, setShowMiniMapOnCanvas]);
 
-    const emojiAI = '✨';
-
     return (
         <Menubar className="h-8 border-none py-2 shadow-none md:h-10 md:py-0">
             <MenubarMenu>
@@ -255,21 +253,11 @@ export const Menu: React.FC<MenuProps> = () => {
                                 }
                             >
                                 {databaseTypeToLabelMap['postgresql']}
-                                {databaseType !== DatabaseType.POSTGRESQL && (
-                                    <MenubarShortcut className="text-base">
-                                        {emojiAI}
-                                    </MenubarShortcut>
-                                )}
                             </MenubarItem>
                             <MenubarItem
                                 onClick={() => exportSQL(DatabaseType.MYSQL)}
                             >
                                 {databaseTypeToLabelMap['mysql']}
-                                {databaseType !== DatabaseType.MYSQL && (
-                                    <MenubarShortcut className="text-base">
-                                        {emojiAI}
-                                    </MenubarShortcut>
-                                )}
                             </MenubarItem>
                             <MenubarItem
                                 onClick={() =>
@@ -277,31 +265,16 @@ export const Menu: React.FC<MenuProps> = () => {
                                 }
                             >
                                 {databaseTypeToLabelMap['sql_server']}
-                                {databaseType !== DatabaseType.SQL_SERVER && (
-                                    <MenubarShortcut className="text-base">
-                                        {emojiAI}
-                                    </MenubarShortcut>
-                                )}
                             </MenubarItem>
                             <MenubarItem
                                 onClick={() => exportSQL(DatabaseType.MARIADB)}
                             >
                                 {databaseTypeToLabelMap['mariadb']}
-                                {databaseType !== DatabaseType.MARIADB && (
-                                    <MenubarShortcut className="text-base">
-                                        {emojiAI}
-                                    </MenubarShortcut>
-                                )}
                             </MenubarItem>
                             <MenubarItem
                                 onClick={() => exportSQL(DatabaseType.SQLITE)}
                             >
                                 {databaseTypeToLabelMap['sqlite']}
-                                {databaseType !== DatabaseType.SQLITE && (
-                                    <MenubarShortcut className="text-base">
-                                        {emojiAI}
-                                    </MenubarShortcut>
-                                )}
                             </MenubarItem>
                         </MenubarSubContent>
                     </MenubarSub>

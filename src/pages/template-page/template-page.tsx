@@ -66,14 +66,14 @@ const TemplatePageComponent: React.FC = () => {
             <Helmet>
                 {template ? (
                     <>
-                        {HOST_URL !== 'https://db.pfd.io' ? (
+                        {HOST_URL !== 'https://db.virelyn.com' ? (
                             <link
                                 rel="canonical"
-                                href={`https://db.pfd.io/templates/${templateSlug}`}
+                                href={`https://db.virelyn.com/templates/${templateSlug}`}
                             />
                         ) : null}
                         <title>
-                            {`Database schema diagram for - ${template.name} | PFDDB`}
+                            {`Database schema diagram for - ${template.name} | Virelyn`}
                         </title>
                         <meta
                             name="description"
@@ -81,7 +81,7 @@ const TemplatePageComponent: React.FC = () => {
                         />
                         <meta
                             property="og:title"
-                            content={`Database schema diagram for - ${template.name} | PFDDB`}
+                            content={`Database schema diagram for - ${template.name} | Virelyn`}
                         />
                         <meta
                             property="og:url"
@@ -96,10 +96,10 @@ const TemplatePageComponent: React.FC = () => {
                             content={`${HOST_URL}${template.image}`}
                         />
                         <meta property="og:type" content="website" />
-                        <meta property="og:site_name" content="PFDDB" />
+                        <meta property="og:site_name" content="Virelyn" />
                         <meta
                             name="twitter:title"
-                            content={`Database schema for - ${template.name} | PFDDB`}
+                            content={`Database schema for - ${template.name} | Virelyn`}
                         />
                         <meta
                             name="twitter:description"
@@ -117,7 +117,7 @@ const TemplatePageComponent: React.FC = () => {
                         <meta name="twitter:creator" content="@PFDIO" />
                     </>
                 ) : (
-                    <title>PFDDB - Database Schema Diagram</title>
+                    <title>Virelyn - Database Schema Diagram</title>
                 )}
             </Helmet>
 
@@ -126,7 +126,7 @@ const TemplatePageComponent: React.FC = () => {
                     <div className="flex flex-1 justify-start gap-x-3">
                         <div className="flex items-center font-primary">
                             <a
-                                href="https://db.pfd.io"
+                                href="https://db.virelyn.com"
                                 className="cursor-pointer"
                                 rel="noreferrer"
                             >
@@ -136,7 +136,7 @@ const TemplatePageComponent: React.FC = () => {
                                             ? ChartDBLogo
                                             : ChartDBDarkLogo
                                     }
-                                    alt="PFDDB"
+                                    alt="Virelyn"
                                     className="h-4 max-w-fit"
                                 />
                             </a>
@@ -249,7 +249,7 @@ const TemplatePageComponent: React.FC = () => {
 
                                             <Link
                                                 className="break-all text-sm text-muted-foreground"
-                                                href={`${template.url}?ref=PFDDB`}
+                                                href={`${template.url}?ref=Virelyn`}
                                                 target="_blank"
                                             >
                                                 {template.url}

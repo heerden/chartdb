@@ -146,15 +146,15 @@ export const ExportSQLDialog: React.FC<ExportSQLDialogProps> = ({
                     <div>
                         <Trans
                             i18nKey="export_sql_dialog.error.description" // optional -> fallbacks to defaults if not provided
-                            components={[
-                                <a
-                                    key={0}
-                                    href="https://github.com/heerden/pfddb"
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="text-sky-950 hover:underline"
-                                />,
-                            ]}
+                            // components={[
+                            //     <a
+                            //         key={0}
+                            //         href="https://github.com/heerden/chartdb"
+                            //         target="_blank"
+                            //         rel="noreferrer"
+                            //         className="text-sky-950 hover:underline"
+                            //     />,
+                            // ]}
                         />
                     </div>
                 </div>

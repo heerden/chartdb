@@ -9,7 +9,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/sidebar/sidebar';
-import { SquareStack, Table, Workflow } from 'lucide-react';
+import { Group, SquareStack, Table, Workflow } from 'lucide-react';
 import { useLayout } from '@/hooks/use-layout';
 import { useTranslation } from 'react-i18next';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
@@ -108,7 +108,7 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = () => {
                                     ? ChartDBLogo
                                     : ChartDBDarkLogo
                             }
-                            alt="chartDB"
+                            alt="Virelyn"
                             className="h-4 max-w-fit"
                         />
                     </a>

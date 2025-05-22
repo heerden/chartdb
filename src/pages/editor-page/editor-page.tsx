@@ -137,8 +137,8 @@ const EditorPageComponent: React.FC = () => {
             <Helmet>
                 <title>
                     {diagramName
-                        ? `PFDDB - ${diagramName} schema`
-                        : 'PFDDB - From your CI pipeline, create a visual database schema, editable and ready to evolve'}
+                        ? `Virelyn - ${diagramName} schema`
+                        : 'Virelyn - From your CI pipeline, create a visual database schema, editable and ready to evolve'}
                 </title>
             </Helmet>
             <section

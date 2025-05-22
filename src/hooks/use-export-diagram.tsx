@@ -10,7 +10,7 @@ export const useExportDiagram = () => {
 
     const downloadOutput = useCallback((name: string, dataUrl: string) => {
         const a = document.createElement('a');
-        a.setAttribute('download', `pfddb(${name}).json`);
+        a.setAttribute('download', `virelyn-${name}.json`);
         a.setAttribute('href', dataUrl);
         a.click();
     }, []);

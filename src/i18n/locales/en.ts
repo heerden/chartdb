@@ -201,6 +201,26 @@ export const en = {
                     description: 'Create a view to get started',
                 },
             },
+
+            areas_section: {
+                areas: 'Areas',
+                add_area: 'Add Area',
+                filter: 'Filter',
+                clear: 'Clear Filter',
+                no_results: 'No areas found matching your filter.',
+
+                area: {
+                    area_actions: {
+                        title: 'Area Actions',
+                        edit_name: 'Edit Name',
+                        delete_area: 'Delete Area',
+                    },
+                },
+                empty_state: {
+                    title: 'No areas',
+                    description: 'Create an area to get started',
+                },
+            },
         },
 
         toolbar: {
@@ -227,7 +247,7 @@ export const en = {
                 title: 'Import your Database',
                 database_edition: 'Database Edition:',
                 step_1: 'Run this script in your database:',
-                step_2: 'Paste the script result here:',
+                step_2: 'Paste the script result into this modal →',
                 script_results_placeholder: 'Script results here...',
                 ssms_instructions: {
                     button_text: 'SSMS Instructions',
@@ -321,6 +341,11 @@ export const en = {
             scale_4x: '4x',
             cancel: 'Cancel',
             export: 'Export',
+            advanced_options: 'Advanced Options',
+            pattern: 'Include background pattern',
+            pattern_description: 'Add subtle grid pattern to background.',
+            transparent: 'Transparent background',
+            transparent_description: 'Remove background color from image.',
         },
 
         new_table_schema_dialog: {
@@ -338,6 +363,13 @@ export const en = {
             confirm: 'Change',
         },
 
+        star_us_dialog: {
+            title: 'Help us improve!',
+            description:
+                "Would you like to star us on GitHub? It's just a click away!",
+            close: 'Not now',
+            confirm: 'Of course!',
+        },
         export_diagram_dialog: {
             title: 'Export Diagram',
             description: 'Choose the format for export:',
@@ -386,6 +418,7 @@ export const en = {
         canvas_context_menu: {
             new_table: 'New Table',
             new_relationship: 'New Relationship',
+            new_area: 'New Area',
         },
 
         table_node_context_menu: {

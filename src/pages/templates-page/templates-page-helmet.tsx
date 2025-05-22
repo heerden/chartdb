@@ -8,7 +8,7 @@ export interface TemplatesPageHelmetProps {
     isFeatured: boolean;
 }
 
-const CHARTDB_HOST_URL = 'https://db.pfd.io';
+const CHARTDB_HOST_URL = 'https://db.virelyn.com';
 export const TemplatesPageHelmet: React.FC<TemplatesPageHelmetProps> = ({
     tag,
     isFeatured,
@@ -41,13 +41,13 @@ export const TemplatesPageHelmet: React.FC<TemplatesPageHelmetProps> = ({
             ) : null}
 
             {tag ? (
-                <title>{`PFDDB - ${tag} database schema diagram templates`}</title>
+                <title>{`Virelyn - ${tag} database schema diagram templates`}</title>
             ) : isFeatured ? (
                 <title>
-                    PFDDB - Featured database schema diagram templates
+                    Virelyn - Featured database schema diagram templates
                 </title>
             ) : (
-                <title>PFDDB - Database schema diagram templates</title>
+                <title>Virelyn - Database schema diagram templates</title>
             )}
 
             {tag ? (
@@ -65,17 +65,17 @@ export const TemplatesPageHelmet: React.FC<TemplatesPageHelmetProps> = ({
             {tag ? (
                 <meta
                     property="og:title"
-                    content={`PFDDB - ${tag} database schema diagram templates`}
+                    content={`Virelyn - ${tag} database schema diagram templates`}
                 />
             ) : isFeatured ? (
                 <meta
                     property="og:title"
-                    content="PFDDB - Featured database schema diagram templates"
+                    content="Virelyn - Featured database schema diagram templates"
                 />
             ) : (
                 <meta
                     property="og:title"
-                    content="PFDDB - Database schema diagram templates"
+                    content="Virelyn - Database schema diagram templates"
                 />
             )}
 
@@ -106,20 +106,20 @@ export const TemplatesPageHelmet: React.FC<TemplatesPageHelmetProps> = ({
             )}
             <meta
                 property="og:image"
-                content="https://github.com/heerden/pfddb/raw/fork/public/pfddb.png"
+                content="https://github.com/heerden/chartdb/raw/fork/public/virelyn.png"
             />
             <meta property="og:type" content="website" />
-            <meta property="og:site_name" content="PFDDB" />
+            <meta property="og:site_name" content="Virelyn" />
 
             {tag ? (
                 <meta
                     name="twitter:title"
-                    content={`PFDDB - ${tag} database schema diagram templates`}
+                    content={`Virelyn - ${tag} database schema diagram templates`}
                 />
             ) : (
                 <meta
                     name="twitter:title"
-                    content="PFDDB - Database schema diagram templates"
+                    content="Virelyn - Database schema diagram templates"
                 />
             )}
 
@@ -137,7 +137,7 @@ export const TemplatesPageHelmet: React.FC<TemplatesPageHelmetProps> = ({
 
             <meta
                 name="twitter:image"
-                content="https://github.com/heerden/pfddb/raw/fork/public/pfddb.png"
+                content="https://github.com/heerden/virelyn/raw/fork/public/virelyn.png"
             />
             <meta name="twitter:card" content="summary_large_image" />
             <meta name="twitter:site" content="@PFDIO" />

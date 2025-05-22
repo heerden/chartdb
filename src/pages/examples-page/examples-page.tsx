@@ -51,14 +51,14 @@ const ExamplesPageComponent: React.FC = () => {
     return (
         <>
             <Helmet>
-                <title>PFDDB - Example Database Diagrams & Schemas</title>
+                <title>Virelyn - Example Database Diagrams & Schemas</title>
             </Helmet>
             <section className="flex w-screen flex-col bg-background">
                 <nav className="flex h-12 flex-row items-center justify-between border-b px-4">
                     <div className="flex flex-1 justify-start gap-x-3">
                         <div className="flex items-center font-primary">
                             <a
-                                href="https://db.pfd.io"
+                                href="https://db.virelyn.com"
                                 className="cursor-pointer"
                                 rel="noreferrer"
                             >
@@ -68,7 +68,7 @@ const ExamplesPageComponent: React.FC = () => {
                                             ? ChartDBLogo
                                             : ChartDBDarkLogo
                                     }
-                                    alt="PFDDB"
+                                    alt="Virelyn"
                                     className="h-4 max-w-fit"
                                 />
                             </a>
@@ -83,7 +83,7 @@ const ExamplesPageComponent: React.FC = () => {
                     </h1>
                     <h2 className="mt-1 font-primary text-base text-muted-foreground">
                         A collection of examples to help you get started with
-                        PFDDB.
+                        Virelyn.
                     </h2>
                     <h2 className="mt-1 text-base font-semibold">
                         Click on one 😀

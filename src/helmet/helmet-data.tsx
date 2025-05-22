@@ -10,7 +10,7 @@ export const HelmetData: React.FC = () => (
         <meta property="og:type" content="website" />
         <meta
             property="og:title"
-            content="PFDDB - From your CI pipeline, create a visual database schema, editable and ready to evolve"
+            content="Virelyn - From your CI pipeline, create a visual database schema, editable and ready to evolve"
         />
         <meta
             property="og:description"
@@ -18,9 +18,9 @@ export const HelmetData: React.FC = () => (
         />
         <meta
             property="og:image"
-            content="https://github.com/heerden/pfddb/raw/fork/public/pfddb.png"
+            content="https://github.com/heerden/chartdb/raw/fork/public/virelyn.png"
         />
-        <meta property="og:url" content="https://db.pfd.io" />
+        <meta property="og:url" content="https://db.virelyn.com" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta
             name="twitter:title"
@@ -32,10 +32,10 @@ export const HelmetData: React.FC = () => (
         />
         <meta
             name="twitter:image"
-            content="https://github.com/heerden/pfddb/raw/fork/public/pfddb.png"
+            content="https://github.com/heerden/chartdb/raw/fork/public/virelyn.png"
         />
         <title>
-            PFDDB - From your CI pipeline, create a visual database schema,
+            Virelyn - From your CI pipeline, create a visual database schema,
             editable and ready to evolve
         </title>
     </Helmet>
