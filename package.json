@@ -1,7 +1,7 @@
 {
     "name": "virelyn",
     "private": true,
-    "version": "1.0.4-1.12.0",
+    "version": "1.0.5-1.13.1",
     "type": "module",
     "description": "Create a visual database schema, editable and ready to evolve, directly from your CI pipeline",
     "scripts": {

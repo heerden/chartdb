@@ -25,42 +25,46 @@ import {
 import { DatabaseType } from './database-type';
 import type { DatabaseMetadata } from '../data/import-metadata/metadata-types/database-metadata';
 import { z } from 'zod';
-import { getTableDimensions } from '@/pages/editor-page/canvas/canvas-utils';
+
+export const MAX_TABLE_SIZE = 450;
+export const MID_TABLE_SIZE = 337;
+export const MIN_TABLE_SIZE = 224;
+export const TABLE_MINIMIZED_FIELDS = 10;
 
 export interface DBTable {
     id: string;
     name: string;
-    schema?: string;
+    schema?: string | null;
     x: number;
     y: number;
     fields: DBField[];
     indexes: DBIndex[];
     color: string;
     isView: boolean;
-    isMaterializedView?: boolean;
+    isMaterializedView?: boolean | null;
     createdAt: number;
-    width?: number;
-    comments?: string;
-    order?: number;
-    expanded?: boolean;
+    width?: number | null;
+    comments?: string | null;
+    order?: number | null;
+    expanded?: boolean | null;
 }
 
 export const dbTableSchema: z.ZodType<DBTable> = z.object({
     id: z.string(),
     name: z.string(),
-    schema: z.string().optional(),
+    schema: z.string().or(z.null()).optional(),
     x: z.number(),
     y: z.number(),
     fields: z.array(dbFieldSchema),
     indexes: z.array(dbIndexSchema),
     color: z.string(),
     isView: z.boolean(),
-    isMaterializedView: z.boolean().optional(),
+    isMaterializedView: z.boolean().or(z.null()).optional(),
     createdAt: z.number(),
-    width: z.number().optional(),
-    comments: z.string().optional(),
-    order: z.number().optional(),
-    expanded: z.boolean().optional(),
+    width: z.number().or(z.null()).optional(),
+    comments: z.string().or(z.null()).optional(),
+    order: z.number().or(z.null()).optional(),
+    expanded: z.boolean().or(z.null()).optional(),
 });
 
 export const shouldShowTablesBySchemaFilter = (
@@ -367,4 +371,37 @@ export const adjustTablePositions = ({
     }
 
     return tables;
+};
+
+export const calcTableHeight = (table?: DBTable): number => {
+    if (!table) {
+        return 300;
+    }
+
+    const FIELD_HEIGHT = 32; // h-8 per field
+    const TABLE_FOOTER_HEIGHT = 32; // h-8 for show more button
+    const TABLE_HEADER_HEIGHT = 42;
+    // Calculate how many fields are visible
+    const fieldCount = table.fields.length;
+    let visibleFieldCount = fieldCount;
+
+    // If not expanded, use minimum of field count and TABLE_MINIMIZED_FIELDS
+    if (!table.expanded) {
+        visibleFieldCount = Math.min(fieldCount, TABLE_MINIMIZED_FIELDS);
+    }
+
+    // Calculate height based on visible fields
+    const fieldsHeight = visibleFieldCount * FIELD_HEIGHT;
+    const showMoreButtonHeight =
+        fieldCount > TABLE_MINIMIZED_FIELDS ? TABLE_FOOTER_HEIGHT : 0;
+
+    return TABLE_HEADER_HEIGHT + fieldsHeight + showMoreButtonHeight;
+};
+
+export const getTableDimensions = (
+    table: DBTable
+): { width: number; height: number } => {
+    const height = calcTableHeight(table);
+    const width = table.width || MIN_TABLE_SIZE;
+    return { width, height };
 };

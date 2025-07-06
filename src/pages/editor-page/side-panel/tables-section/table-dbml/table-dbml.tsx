@@ -12,10 +12,40 @@ import { setupDBMLLanguage } from '@/components/code-snippet/languages/dbml-lang
 import { DatabaseType } from '@/lib/domain/database-type';
 import { ArrowLeftRight } from 'lucide-react';
 import { type DBField } from '@/lib/domain/db-field';
+import type { DBCustomType } from '@/lib/domain/db-custom-type';
+import { DBCustomTypeKind } from '@/lib/domain/db-custom-type';
 
 export interface TableDBMLProps {
     filteredTables: DBTable[];
 }
+
+// Use DBCustomType for generating Enum DBML
+const generateEnumsDBML = (customTypes: DBCustomType[] | undefined): string => {
+    if (!customTypes || customTypes.length === 0) {
+        return '';
+    }
+
+    // Filter for enum types and map them
+    return customTypes
+        .filter((ct) => ct.kind === DBCustomTypeKind.enum)
+        .map((enumDef) => {
+            const enumIdentifier = enumDef.schema
+                ? `"${enumDef.schema}"."${enumDef.name.replace(/"/g, '\\"')}"`
+                : `"${enumDef.name.replace(/"/g, '\\"')}"`;
+
+            const valuesString = (enumDef.values || []) // Ensure values array exists
+                .map((valueName) => {
+                    // valueName is a string as per DBCustomType
+                    const valLine = `    "${valueName.replace(/"/g, '\\"')}"`;
+                    // If you have notes per enum value, you'd need to adjust DBCustomType
+                    // For now, assuming no notes per value in DBCustomType
+                    return valLine;
+                })
+                .join('\n');
+            return `Enum ${enumIdentifier} {\n${valuesString}\n}\n`;
+        })
+        .join('\n');
+};
 
 const getEditorTheme = (theme: EffectiveTheme) => {
     return theme === 'dark' ? 'dbml-dark' : 'dbml-light';
@@ -138,6 +168,35 @@ const sanitizeSQLforDBML = (sql: string): string => {
                 constraintNames.add(name);
                 return match;
             }
+        }
+    );
+
+    // Comment out self-referencing foreign keys to prevent "Two endpoints are the same" error
+    // Example: ALTER TABLE public.class ADD CONSTRAINT ... FOREIGN KEY (class_id) REFERENCES public.class (class_id);
+    const lines = sanitized.split('\n');
+    const processedLines = lines.map((line) => {
+        const selfRefFKPattern =
+            /ALTER\s+TABLE\s+(?:\S+\.)?(\S+)\s+ADD\s+CONSTRAINT\s+\S+\s+FOREIGN\s+KEY\s*\([^)]+\)\s+REFERENCES\s+(?:\S+\.)?\1\s*\([^)]+\)\s*;/i;
+        if (selfRefFKPattern.test(line)) {
+            return `-- ${line}`; // Comment out the line
+        }
+        return line;
+    });
+    sanitized = processedLines.join('\n');
+
+    // Fix PostgreSQL type casting syntax that the DBML parser doesn't understand
+    sanitized = sanitized.replace(/::regclass/g, '');
+    sanitized = sanitized.replace(/: :regclass/g, ''); // Fix corrupted version
+
+    // Fix duplicate columns in index definitions
+    sanitized = sanitized.replace(
+        /CREATE\s+(?:UNIQUE\s+)?INDEX\s+\S+\s+ON\s+\S+\s*\(([^)]+)\)/gi,
+        (match, columnList) => {
+            const columns = columnList
+                .split(',')
+                .map((col: string) => col.trim());
+            const uniqueColumns = [...new Set(columns)]; // Remove duplicates
+            return match.replace(columnList, uniqueColumns.join(', '));
         }
     );
 
@@ -273,6 +332,71 @@ const isSQLKeyword = (name: string): boolean => {
     return keywords.has(name.toUpperCase());
 };
 
+// Function to remove duplicate relationships from the diagram
+const deduplicateRelationships = (diagram: Diagram): Diagram => {
+    if (!diagram.relationships) return diagram;
+
+    const seenRelationships = new Set<string>();
+    const uniqueRelationships = diagram.relationships.filter((rel) => {
+        // Create a unique key based on the relationship endpoints
+        const relationshipKey = `${rel.sourceTableId}-${rel.sourceFieldId}->${rel.targetTableId}-${rel.targetFieldId}`;
+
+        if (seenRelationships.has(relationshipKey)) {
+            return false; // Skip duplicate
+        }
+
+        seenRelationships.add(relationshipKey);
+        return true; // Keep unique relationship
+    });
+
+    return {
+        ...diagram,
+        relationships: uniqueRelationships,
+    };
+};
+
+// Function to append comment statements for renamed tables and fields
+const appendRenameComments = (
+    baseScript: string,
+    sqlRenamedTables: Map<string, string>,
+    fieldRenames: Array<{
+        table: string;
+        originalName: string;
+        newName: string;
+    }>,
+    finalDiagramForExport: Diagram
+): string => {
+    let script = baseScript;
+
+    // Append COMMENTS for tables renamed due to SQL keywords
+    sqlRenamedTables.forEach((originalName, newName) => {
+        const escapedOriginal = originalName.replace(/'/g, "\\'");
+        // Find the table to get its schema
+        const table = finalDiagramForExport.tables?.find(
+            (t) => t.name === newName
+        );
+        const tableIdentifier = table?.schema
+            ? `"${table.schema}"."${newName}"`
+            : `"${newName}"`;
+        script += `\nCOMMENT ON TABLE ${tableIdentifier} IS 'Original name was "${escapedOriginal}" (renamed due to SQL keyword conflict).';`;
+    });
+
+    // Append COMMENTS for fields renamed due to SQL keyword conflicts
+    fieldRenames.forEach(({ table, originalName, newName }) => {
+        const escapedOriginal = originalName.replace(/'/g, "\\'");
+        // Find the table to get its schema
+        const tableObj = finalDiagramForExport.tables?.find(
+            (t) => t.name === table
+        );
+        const tableIdentifier = tableObj?.schema
+            ? `"${tableObj.schema}"."${table}"`
+            : `"${table}"`;
+        script += `\nCOMMENT ON COLUMN ${tableIdentifier}."${newName}" IS 'Original name was "${escapedOriginal}" (renamed due to SQL keyword conflict).';`;
+    });
+
+    return script;
+};
+
 // Fix DBML formatting to ensure consistent display of char and varchar types
 const normalizeCharTypeFormat = (dbml: string): string => {
     // Replace "char (N)" with "char(N)" to match varchar's formatting
@@ -287,7 +411,7 @@ export const TableDBML: React.FC<TableDBMLProps> = ({ filteredTables }) => {
     const { effectiveTheme } = useTheme();
     const { toast } = useToast();
     const [dbmlFormat, setDbmlFormat] = useState<'inline' | 'standard'>(
-        'standard'
+        'inline'
     );
 
     // --- Effect for handling empty field name warnings ---
@@ -327,16 +451,26 @@ export const TableDBML: React.FC<TableDBMLProps> = ({ filteredTables }) => {
             };
         });
 
+        // Remove duplicate tables (keep first occurrence by table name)
+        const seenTableNames = new Set<string>();
+        const uniqueTables = sanitizedTables.filter((table) => {
+            if (seenTableNames.has(table.name)) {
+                return false; // Skip duplicate
+            }
+            seenTableNames.add(table.name);
+            return true; // Keep unique table
+        });
+
         // Create the base filtered diagram structure
         const filteredDiagram: Diagram = {
             ...currentDiagram,
-            tables: sanitizedTables,
+            tables: uniqueTables,
             relationships:
                 currentDiagram.relationships?.filter((rel) => {
-                    const sourceTable = sanitizedTables.find(
+                    const sourceTable = uniqueTables.find(
                         (t) => t.id === rel.sourceTableId
                     );
-                    const targetTable = sanitizedTables.find(
+                    const targetTable = uniqueTables.find(
                         (t) => t.id === rel.targetTableId
                     );
                     const sourceFieldExists = sourceTable?.fields.some(
@@ -359,85 +493,89 @@ export const TableDBML: React.FC<TableDBMLProps> = ({ filteredTables }) => {
         const cleanDiagram = fixProblematicFieldNames(filteredDiagram);
 
         // --- Final sanitization and renaming pass ---
-        // Track tables renamed due to SQL keyword conflicts
+        const shouldRenameKeywords =
+            currentDiagram.databaseType === DatabaseType.POSTGRESQL ||
+            currentDiagram.databaseType === DatabaseType.SQLITE;
         const sqlRenamedTables = new Map<string, string>();
-        // Track fields renamed due to SQL keyword conflicts
         const fieldRenames: Array<{
             table: string;
             originalName: string;
             newName: string;
         }> = [];
-        const finalDiagramForExport: Diagram = {
-            ...cleanDiagram,
-            tables:
-                cleanDiagram.tables?.map((table) => {
-                    const originalName = table.name;
-                    // Sanitize table name
-                    let safeTableName = originalName.replace(/[^\w]/g, '_');
-                    // Rename if SQL keyword
-                    if (isSQLKeyword(safeTableName)) {
-                        const newName = `${safeTableName}_table`;
-                        sqlRenamedTables.set(newName, originalName);
-                        safeTableName = newName;
-                    }
 
-                    const fieldNameCounts = new Map<string, number>();
-                    const processedFields = table.fields.map((field) => {
-                        const originalSafeName = field.name.replace(
-                            /[^\w]/g,
-                            '_'
-                        );
-                        let finalSafeName = originalSafeName;
-                        const count =
-                            fieldNameCounts.get(originalSafeName) || 0;
+        const processTable = (table: DBTable) => {
+            const originalName = table.name;
+            let safeTableName = originalName.replace(/[^\w]/g, '_');
 
-                        if (count > 0) {
-                            finalSafeName = `${originalSafeName}_${count + 1}`; // Rename duplicate
-                        }
-                        fieldNameCounts.set(originalSafeName, count + 1);
+            // Rename table if SQL keyword (PostgreSQL only)
+            if (shouldRenameKeywords && isSQLKeyword(safeTableName)) {
+                const newName = `${safeTableName}_table`;
+                sqlRenamedTables.set(newName, originalName);
+                safeTableName = newName;
+            }
 
-                        // Create a copy and remove comments
-                        const sanitizedField: DBField = {
-                            ...field,
-                            name: finalSafeName,
-                        };
-                        delete sanitizedField.comments;
+            const fieldNameCounts = new Map<string, number>();
+            const processedFields = table.fields.map((field) => {
+                const originalSafeName = field.name.replace(/[^\w]/g, '_');
+                let finalSafeName = originalSafeName;
 
-                        // Rename if SQL keyword
-                        if (isSQLKeyword(finalSafeName)) {
-                            const newFieldName = `${finalSafeName}_field`;
-                            fieldRenames.push({
-                                table: safeTableName,
-                                originalName: finalSafeName,
-                                newName: newFieldName,
-                            });
-                            sanitizedField.name = newFieldName;
-                        }
-                        return sanitizedField;
+                // Handle duplicate field names
+                const count = fieldNameCounts.get(originalSafeName) || 0;
+                if (count > 0) {
+                    finalSafeName = `${originalSafeName}_${count + 1}`;
+                }
+                fieldNameCounts.set(originalSafeName, count + 1);
+
+                // Create sanitized field
+                const sanitizedField: DBField = {
+                    ...field,
+                    name: finalSafeName,
+                };
+                delete sanitizedField.comments;
+
+                // Rename field if SQL keyword (PostgreSQL only)
+                if (shouldRenameKeywords && isSQLKeyword(finalSafeName)) {
+                    const newFieldName = `${finalSafeName}_field`;
+                    fieldRenames.push({
+                        table: safeTableName,
+                        originalName: finalSafeName,
+                        newName: newFieldName,
                     });
+                    sanitizedField.name = newFieldName;
+                }
 
-                    return {
-                        ...table,
-                        name: safeTableName,
-                        fields: processedFields, // Use fields with renamed duplicates
-                        indexes: (table.indexes || []).map((index) => ({
-                            ...index,
-                            name: index.name
-                                ? index.name.replace(/[^\w]/g, '_')
-                                : `idx_${Math.random().toString(36).substring(2, 8)}`,
-                        })),
-                    };
-                }) ?? [],
+                return sanitizedField;
+            });
+
+            return {
+                ...table,
+                name: safeTableName,
+                fields: processedFields,
+                indexes: (table.indexes || []).map((index) => ({
+                    ...index,
+                    name: index.name
+                        ? index.name.replace(/[^\w]/g, '_')
+                        : `idx_${Math.random().toString(36).substring(2, 8)}`,
+                })),
+            };
+        };
+
+        const finalDiagramForExport: Diagram = deduplicateRelationships({
+            ...cleanDiagram,
+            tables: cleanDiagram.tables?.map(processTable) ?? [],
             relationships:
                 cleanDiagram.relationships?.map((rel, index) => ({
                     ...rel,
                     name: `fk_${index}_${rel.name ? rel.name.replace(/[^\w]/g, '_') : Math.random().toString(36).substring(2, 8)}`,
                 })) ?? [],
-        } as Diagram;
+        } as Diagram);
 
         let standard = '';
         let inline = '';
         let baseScript = ''; // Define baseScript outside try
+
+        // Use finalDiagramForExport.customTypes which should be DBCustomType[]
+        const enumsDBML = generateEnumsDBML(finalDiagramForExport.customTypes);
 
         try {
             baseScript = exportBaseSQL({
@@ -448,17 +586,15 @@ export const TableDBML: React.FC<TableDBMLProps> = ({ filteredTables }) => {
 
             baseScript = sanitizeSQLforDBML(baseScript);
 
-            // Append COMMENTS for tables renamed due to SQL keywords
-            sqlRenamedTables.forEach((originalName, newName) => {
-                const escapedOriginal = originalName.replace(/'/g, "\\'");
-                baseScript += `\nCOMMENT ON TABLE "${newName}" IS 'Original name was "${escapedOriginal}" (renamed due to SQL keyword conflict).';`;
-            });
-
-            // Append COMMENTS for fields renamed due to SQL keyword conflicts
-            fieldRenames.forEach(({ table, originalName, newName }) => {
-                const escapedOriginal = originalName.replace(/'/g, "\\'");
-                baseScript += `\nCOMMENT ON COLUMN "${table}"."${newName}" IS 'Original name was "${escapedOriginal}" (renamed due to SQL keyword conflict).';`;
-            });
+            // Append comments for renamed tables and fields (PostgreSQL only)
+            if (shouldRenameKeywords) {
+                baseScript = appendRenameComments(
+                    baseScript,
+                    sqlRenamedTables,
+                    fieldRenames,
+                    finalDiagramForExport
+                );
+            }
 
             standard = normalizeCharTypeFormat(
                 importer.import(
@@ -466,6 +602,9 @@ export const TableDBML: React.FC<TableDBMLProps> = ({ filteredTables }) => {
                     databaseTypeToImportFormat(currentDiagram.databaseType)
                 )
             );
+
+            // Prepend Enum DBML to the standard output
+            standard = enumsDBML + '\n' + standard;
 
             inline = normalizeCharTypeFormat(convertToInlineRefs(standard));
         } catch (error: unknown) {
@@ -494,6 +633,15 @@ export const TableDBML: React.FC<TableDBMLProps> = ({ filteredTables }) => {
                         'Could not generate DBML due to an unknown error',
                     variant: 'destructive',
                 });
+            }
+
+            // If an error occurred, still prepend enums if they exist, or they'll be lost.
+            // The error message will then follow.
+            if (standard.startsWith('// Error generating DBML:')) {
+                standard = enumsDBML + standard;
+            }
+            if (inline.startsWith('// Error generating DBML:')) {
+                inline = enumsDBML + inline;
             }
         }
         return { standardDbml: standard, inlineDbml: inline };

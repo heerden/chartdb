@@ -30,7 +30,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import equal from 'fast-deep-equal';
 import type { TableNodeType } from './table-node/table-node';
-import { MIN_TABLE_SIZE, TableNode } from './table-node/table-node';
+import { TableNode } from './table-node/table-node';
 import type { RelationshipEdgeType } from './relationship-edge/relationship-edge';
 import { RelationshipEdge } from './relationship-edge/relationship-edge';
 import { useChartDB } from '@/hooks/use-chartdb';
@@ -48,7 +48,10 @@ import { Badge } from '@/components/badge/badge';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from 'react-i18next';
 import type { DBTable } from '@/lib/domain/db-table';
-import { shouldShowTablesBySchemaFilter } from '@/lib/domain/db-table';
+import {
+    MIN_TABLE_SIZE,
+    shouldShowTablesBySchemaFilter,
+} from '@/lib/domain/db-table';
 import { useLocalConfig } from '@/hooks/use-local-config';
 import {
     Tooltip,
@@ -80,6 +83,9 @@ import { useCanvas } from '@/hooks/use-canvas';
 import type { AreaNodeType } from './area-node/area-node';
 import { AreaNode } from './area-node/area-node';
 import type { Area } from '@/lib/domain/area';
+
+const HIGHLIGHTED_EDGE_Z_INDEX = 1;
+const DEFAULT_EDGE_Z_INDEX = 0;
 
 export type EdgeType = RelationshipEdgeType | DependencyEdgeType;
 
@@ -129,7 +135,7 @@ export interface CanvasProps {
 }
 
 export const Canvas: React.FC<CanvasProps> = ({ initialTables }) => {
-    const { getEdge, getInternalNode, getEdges, getNode } = useReactFlow();
+    const { getEdge, getInternalNode, getNode } = useReactFlow();
     const [selectedTableIds, setSelectedTableIds] = useState<string[]>([]);
     const [selectedRelationshipIds, setSelectedRelationshipIds] = useState<
         string[]
@@ -279,22 +285,36 @@ export const Canvas: React.FC<CanvasProps> = ({ initialTables }) => {
     }, [edges, setSelectedRelationshipIds, selectedRelationshipIds]);
 
     useEffect(() => {
-        const tablesSelectedEdges = getEdges()
-            .filter(
-                (edge) =>
-                    selectedTableIds.includes(edge.source) ||
-                    selectedTableIds.includes(edge.target)
-            )
-            .map((edge) => edge.id);
+        const selectedTableIdsSet = new Set(selectedTableIds);
+        const selectedRelationshipIdsSet = new Set(selectedRelationshipIds);
 
-        const allSelectedEdges = [
-            ...tablesSelectedEdges,
-            ...selectedRelationshipIds,
-        ];
+        setEdges((prevEdges) => {
+            // Check if any edge needs updating
+            let hasChanges = false;
 
-        setEdges((edges) =>
-            edges.map((edge): EdgeType => {
-                const selected = allSelectedEdges.includes(edge.id);
+            const newEdges = prevEdges.map((edge): EdgeType => {
+                const shouldBeHighlighted =
+                    selectedRelationshipIdsSet.has(edge.id) ||
+                    selectedTableIdsSet.has(edge.source) ||
+                    selectedTableIdsSet.has(edge.target);
+
+                const currentHighlighted = edge.data?.highlighted ?? false;
+                const currentAnimated = edge.animated ?? false;
+                const currentZIndex = edge.zIndex ?? 0;
+
+                // Skip if no changes needed
+                if (
+                    currentHighlighted === shouldBeHighlighted &&
+                    currentAnimated === shouldBeHighlighted &&
+                    currentZIndex ===
+                        (shouldBeHighlighted
+                            ? HIGHLIGHTED_EDGE_Z_INDEX
+                            : DEFAULT_EDGE_Z_INDEX)
+                ) {
+                    return edge;
+                }
+
+                hasChanges = true;
 
                 if (edge.type === 'dependency-edge') {
                     const dependencyEdge = edge as DependencyEdgeType;
@@ -302,10 +322,12 @@ export const Canvas: React.FC<CanvasProps> = ({ initialTables }) => {
                         ...dependencyEdge,
                         data: {
                             ...dependencyEdge.data!,
-                            highlighted: selected,
+                            highlighted: shouldBeHighlighted,
                         },
-                        animated: selected,
-                        zIndex: selected ? 1 : 0,
+                        animated: shouldBeHighlighted,
+                        zIndex: shouldBeHighlighted
+                            ? HIGHLIGHTED_EDGE_Z_INDEX
+                            : DEFAULT_EDGE_Z_INDEX,
                     };
                 } else {
                     const relationshipEdge = edge as RelationshipEdgeType;
@@ -313,34 +335,47 @@ export const Canvas: React.FC<CanvasProps> = ({ initialTables }) => {
                         ...relationshipEdge,
                         data: {
                             ...relationshipEdge.data!,
-                            highlighted: selected,
+                            highlighted: shouldBeHighlighted,
                         },
-                        animated: selected,
-                        zIndex: selected ? 1 : 0,
+                        animated: shouldBeHighlighted,
+                        zIndex: shouldBeHighlighted
+                            ? HIGHLIGHTED_EDGE_Z_INDEX
+                            : DEFAULT_EDGE_Z_INDEX,
                     };
                 }
-            })
-        );
-    }, [selectedRelationshipIds, selectedTableIds, setEdges, getEdges]);
+            });
+
+            return hasChanges ? newEdges : prevEdges;
+        });
+    }, [selectedRelationshipIds, selectedTableIds, setEdges]);
 
     useEffect(() => {
-        setNodes([
-            ...tables.map((table) => {
-                const isOverlapping =
-                    (overlapGraph.graph.get(table.id) ?? []).length > 0;
-                const node = tableToTableNode(table, filteredSchemas);
+        setNodes((prevNodes) => {
+            const newNodes = [
+                ...tables.map((table) => {
+                    const isOverlapping =
+                        (overlapGraph.graph.get(table.id) ?? []).length > 0;
+                    const node = tableToTableNode(table, filteredSchemas);
 
-                return {
-                    ...node,
-                    data: {
-                        ...node.data,
-                        isOverlapping,
-                        highlightOverlappingTables,
-                    },
-                };
-            }),
-            ...areas.map(areaToAreaNode),
-        ]);
+                    return {
+                        ...node,
+                        data: {
+                            ...node.data,
+                            isOverlapping,
+                            highlightOverlappingTables,
+                        },
+                    };
+                }),
+                ...areas.map(areaToAreaNode),
+            ];
+
+            // Check if nodes actually changed
+            if (equal(prevNodes, newNodes)) {
+                return prevNodes;
+            }
+
+            return newNodes;
+        });
     }, [
         tables,
         areas,

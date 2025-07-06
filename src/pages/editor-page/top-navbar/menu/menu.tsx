@@ -17,7 +17,6 @@ import { useDialog } from '@/hooks/use-dialog';
 import { useExportImage } from '@/hooks/use-export-image';
 import { databaseTypeToLabelMap } from '@/lib/databases';
 import { DatabaseType } from '@/lib/domain/database-type';
-// import { useConfig } from '@/hooks/use-config';
 import {
     KeyboardShortcutAction,
     keyboardShortcutsForOS,
@@ -65,7 +64,6 @@ export const Menu: React.FC<MenuProps> = () => {
     } = useLocalConfig();
     const { t } = useTranslation();
     const { redo, undo, hasRedo, hasUndo } = useHistory();
-    // const { config, updateConfig } = useConfig();
     const { exportImage } = useExportImage();
     const navigate = useNavigate();
 
@@ -242,40 +240,67 @@ export const Menu: React.FC<MenuProps> = () => {
                             {t('menu.file.export_sql')}
                         </MenubarSubTrigger>
                         <MenubarSubContent>
-                            <MenubarItem
-                                onClick={() => exportSQL(DatabaseType.GENERIC)}
-                            >
-                                {databaseTypeToLabelMap['generic']}
-                            </MenubarItem>
-                            <MenubarItem
-                                onClick={() =>
-                                    exportSQL(DatabaseType.POSTGRESQL)
-                                }
-                            >
-                                {databaseTypeToLabelMap['postgresql']}
-                            </MenubarItem>
-                            <MenubarItem
-                                onClick={() => exportSQL(DatabaseType.MYSQL)}
-                            >
-                                {databaseTypeToLabelMap['mysql']}
-                            </MenubarItem>
-                            <MenubarItem
-                                onClick={() =>
-                                    exportSQL(DatabaseType.SQL_SERVER)
-                                }
-                            >
-                                {databaseTypeToLabelMap['sql_server']}
-                            </MenubarItem>
-                            <MenubarItem
-                                onClick={() => exportSQL(DatabaseType.MARIADB)}
-                            >
-                                {databaseTypeToLabelMap['mariadb']}
-                            </MenubarItem>
-                            <MenubarItem
-                                onClick={() => exportSQL(DatabaseType.SQLITE)}
-                            >
-                                {databaseTypeToLabelMap['sqlite']}
-                            </MenubarItem>
+                            {databaseType === DatabaseType.GENERIC ? (
+                                <MenubarItem
+                                    onClick={() =>
+                                        exportSQL(DatabaseType.GENERIC)
+                                    }
+                                >
+                                    {databaseTypeToLabelMap['generic']}
+                                </MenubarItem>
+                            ) : null}
+                            {databaseType !== DatabaseType.GENERIC ? (
+                                <MenubarItem
+                                    onClick={() => exportSQL(databaseType)}
+                                >
+                                    {databaseTypeToLabelMap[databaseType]}
+                                </MenubarItem>
+                            ) : null}
+                            {databaseType !== DatabaseType.POSTGRESQL ? (
+                                <MenubarItem
+                                    onClick={() =>
+                                        exportSQL(DatabaseType.POSTGRESQL)
+                                    }
+                                >
+                                    {databaseTypeToLabelMap['postgresql']}
+                                </MenubarItem>
+                            ) : null}
+                            {databaseType !== DatabaseType.MYSQL ? (
+                                <MenubarItem
+                                    onClick={() =>
+                                        exportSQL(DatabaseType.MYSQL)
+                                    }
+                                >
+                                    {databaseTypeToLabelMap['mysql']}
+                                </MenubarItem>
+                            ) : null}
+                            {databaseType !== DatabaseType.SQL_SERVER ? (
+                                <MenubarItem
+                                    onClick={() =>
+                                        exportSQL(DatabaseType.SQL_SERVER)
+                                    }
+                                >
+                                    {databaseTypeToLabelMap['sql_server']}
+                                </MenubarItem>
+                            ) : null}
+                            {databaseType !== DatabaseType.MARIADB ? (
+                                <MenubarItem
+                                    onClick={() =>
+                                        exportSQL(DatabaseType.MARIADB)
+                                    }
+                                >
+                                    {databaseTypeToLabelMap['mariadb']}
+                                </MenubarItem>
+                            ) : null}
+                            {databaseType !== DatabaseType.SQLITE ? (
+                                <MenubarItem
+                                    onClick={() =>
+                                        exportSQL(DatabaseType.SQLITE)
+                                    }
+                                >
+                                    {databaseTypeToLabelMap['sqlite']}
+                                </MenubarItem>
+                            ) : null}
                         </MenubarSubContent>
                     </MenubarSub>
                     <MenubarSub>
@@ -308,6 +333,8 @@ export const Menu: React.FC<MenuProps> = () => {
                     >
                         {t('menu.file.delete_diagram')}
                     </MenubarItem>
+                    <MenubarSeparator />
+                    <MenubarItem>{t('menu.file.exit')}</MenubarItem>
                 </MenubarContent>
             </MenubarMenu>
             <MenubarMenu>
@@ -440,6 +467,18 @@ export const Menu: React.FC<MenuProps> = () => {
                             </MenubarCheckboxItem>
                         </MenubarSubContent>
                     </MenubarSub>
+                </MenubarContent>
+            </MenubarMenu>
+
+            <MenubarMenu>
+                <MenubarTrigger>{t('menu.backup.backup')}</MenubarTrigger>
+                <MenubarContent>
+                    <MenubarItem onClick={openExportDiagramDialog}>
+                        {t('menu.backup.export_diagram')}
+                    </MenubarItem>
+                    <MenubarItem onClick={openImportDiagramDialog}>
+                        {t('menu.backup.restore_diagram')}
+                    </MenubarItem>
                 </MenubarContent>
             </MenubarMenu>
         </Menubar>
